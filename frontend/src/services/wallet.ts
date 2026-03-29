@@ -15,9 +15,34 @@ interface HorizonAccountResponse {
 }
 
 const FREIGHTER_INSTALL_URL = 'https://www.freighter.app/'
+const WALLET_ADDRESS_KEY = 'stellar_wallet_address'
 
 export class WalletService {
   private connectedAddress: string | null = null
+
+  private saveAddress(address: string): void {
+    try {
+      localStorage.setItem(WALLET_ADDRESS_KEY, address)
+    } catch {
+      // localStorage unavailable — silently ignore
+    }
+  }
+
+  private clearAddress(): void {
+    try {
+      localStorage.removeItem(WALLET_ADDRESS_KEY)
+    } catch {
+      // localStorage unavailable — silently ignore
+    }
+  }
+
+  getSavedAddress(): string | null {
+    try {
+      return localStorage.getItem(WALLET_ADDRESS_KEY)
+    } catch {
+      return null
+    }
+  }
 
   async isInstalled(): Promise<boolean> {
     try {
@@ -51,6 +76,7 @@ export class WalletService {
       }
 
       this.connectedAddress = addressObj.address
+      this.saveAddress(addressObj.address)
       return addressObj.address
     } catch (error) {
       if (error instanceof Error) {
@@ -62,6 +88,7 @@ export class WalletService {
 
   disconnect(): void {
     this.connectedAddress = null
+    this.clearAddress()
   }
 
   async signTransaction(xdr: string, network: 'testnet' | 'mainnet'): Promise<string> {
@@ -126,28 +153,41 @@ export class WalletService {
   }
 
   async checkExistingConnection(): Promise<string | null> {
-    if (!this.isInstalled()) {
+    if (!(await this.isInstalled())) {
+      return null
+    }
+
+    // First check localStorage for saved address
+    const savedAddress = this.getSavedAddress()
+    if (!savedAddress) {
       return null
     }
 
     try {
       const connectedResult = await isConnected()
       if (connectedResult.error || !connectedResult.isConnected) {
+        this.clearAddress()
         return null
       }
 
       const addressObj = await getAddress()
       if (addressObj.error || !addressObj.address) {
+        this.clearAddress()
         return null
+      }
+
+      // Verify the saved address matches the current Freighter address
+      if (addressObj.address !== savedAddress) {
+        this.clearAddress()
+        this.saveAddress(addressObj.address)
       }
 
       this.connectedAddress = addressObj.address
       return addressObj.address
     } catch {
-      // Silent — caller receives null and can prompt manual connect
+      this.clearAddress()
+      return null
     }
-
-    return null
   }
 
   getConnectedAddress(): string | null {
