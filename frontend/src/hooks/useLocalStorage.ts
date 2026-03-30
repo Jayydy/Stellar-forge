@@ -15,8 +15,8 @@ export function useLocalStorage<T>(
       const item = window.localStorage.getItem(key)
       return item ? (JSON.parse(item) as T) : defaultValue
     } catch (error) {
-      // localStorage read failure — fall back to initialValue silently
-      return initialValue
+      // localStorage read failure — fall back to defaultValue silently
+      return defaultValue
     }
   })
 
@@ -47,8 +47,6 @@ export function useLocalStorage<T>(
           /* ignore parse errors */
         }
       }
-    } catch (error) {
-      // localStorage write failure — state is still updated in memory
     }
 
     window.addEventListener('storage', handleStorageChange)

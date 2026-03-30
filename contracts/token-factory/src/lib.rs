@@ -100,6 +100,10 @@ pub enum Error {
     InvalidTokenParams = 14,
     /// Invalid decimals value (must be 0-18 inclusive)
     InvalidDecimals = 15,
+    /// Mint would exceed the token's max supply cap
+    MaxSupplyExceeded = 16,
+    /// Fee split basis points do not sum to 10_000
+    InvalidFeeSplit = 17,
 }
 
 #[contract]
@@ -306,10 +310,9 @@ impl TokenFactory {
         state.token_count = state.token_count.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
         let index = state.token_count;
 
-        env.storage().instance().set(&DataKey::TokenInfo(index), &TokenInfo {
         let token_name = name.clone();
         let token_symbol = symbol.clone();
-        env.storage().instance().set(&index, &TokenInfo {
+        env.storage().instance().set(&DataKey::TokenInfo(index), &TokenInfo {
             name,
             symbol,
             decimals,
@@ -390,7 +393,7 @@ impl TokenFactory {
 
         let token_name = p.name.clone();
         let token_symbol = p.symbol.clone();
-        env.storage().instance().set(&index, &TokenInfo {
+        env.storage().instance().set(&DataKey::TokenInfo(index), &TokenInfo {
             name: p.name,
             symbol: p.symbol,
             decimals: p.decimals,
@@ -500,14 +503,10 @@ impl TokenFactory {
             .get(&DataKey::TokenIndex(token_address.clone()))
             .ok_or(Error::TokenNotFound)?;
 
-        let token_info: TokenInfo = env
-            .storage()
-            .instance()
-            .get(&DataKey::TokenInfo(index))
         // Verify admin is the token creator using direct mapping
         let creator: Address = env.storage().instance().get(&(&token_address, symbol_short!("owner")))
             .ok_or(Error::TokenNotFound)?;
-        
+
         if creator != admin {
             return Err(Error::Unauthorized);
         }
@@ -553,7 +552,7 @@ impl TokenFactory {
             return Err(Error::InsufficientFee);
         }
 
-        // Fetch TokenInfo to verify creator authorization
+        // Fetch token index and verify creator authorization
         let index: u32 = env
             .storage()
             .instance()
@@ -564,10 +563,12 @@ impl TokenFactory {
             .storage()
             .instance()
             .get(&DataKey::TokenInfo(index))
+            .ok_or(Error::TokenNotFound)?;
+
         // Verify admin is the token creator using direct mapping
         let creator: Address = env.storage().instance().get(&(&token_address, symbol_short!("owner")))
             .ok_or(Error::TokenNotFound)?;
-        
+
         if creator != admin {
             return Err(Error::Unauthorized);
         }

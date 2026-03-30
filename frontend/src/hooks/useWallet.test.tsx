@@ -11,17 +11,19 @@ vi.mock('../services/wallet', () => ({
     isInstalled: vi.fn().mockReturnValue(true),
     checkExistingConnection: vi.fn().mockResolvedValue(null),
     getBalance: vi.fn().mockResolvedValue('100.0000000'),
+    getSavedAddress: vi.fn().mockReturnValue(null),
   },
 }))
 
 function Consumer() {
-  const { wallet, isConnecting, error, connect, disconnect } = useWallet()
+  const { wallet, isConnecting, error, isInstalled, connect, disconnect } = useWallet()
   return (
     <div>
       <span data-testid="address">{wallet.address ?? 'null'}</span>
       <span data-testid="connected">{String(wallet.isConnected)}</span>
       <span data-testid="connecting">{String(isConnecting)}</span>
       <span data-testid="error">{error ?? 'null'}</span>
+      <span data-testid="installed">{String(isInstalled)}</span>
       <button data-testid="connect" onClick={connect}>
         Connect
       </button>
@@ -87,5 +89,23 @@ describe('useWallet', () => {
 
     expect(screen.getByTestId('connected').textContent).toBe('false')
     expect(screen.getByTestId('address').textContent).toBe('null')
+  })
+
+  it('isInstalled reflects wallet installation status', () => {
+    renderWithProvider()
+    expect(screen.getByTestId('installed').textContent).toBe('true')
+  })
+
+  it('restores connection from localStorage on mount', async () => {
+    vi.mocked(walletService.checkExistingConnection).mockResolvedValue('GABC123')
+    renderWithProvider()
+
+    // Wait for the effect to run
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    expect(screen.getByTestId('connected').textContent).toBe('true')
+    expect(screen.getByTestId('address').textContent).toBe('GABC123')
   })
 })

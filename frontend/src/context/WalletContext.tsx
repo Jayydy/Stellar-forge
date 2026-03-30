@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { walletService } from '../services/wallet'
 import { useNetwork } from './NetworkContext'
+import { WatchWalletChanges } from '@stellar/freighter-api'
 
 function useNetworkSafe() {
   try {
@@ -92,6 +93,65 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
     initWallet()
   }, [fetchBalance])
+
+  // Listen for Freighter account and network changes
+  useEffect(() => {
+    if (!isInstalled) return
+
+    let watcher: WatchWalletChanges | null = null
+
+    try {
+      watcher = new WatchWalletChanges()
+      
+      watcher.watch(async (result) => {
+        const { address: newAddress, network: newNetwork } = result
+
+        // Handle account change
+        if (newAddress && newAddress !== wallet.address) {
+          setWallet({ address: newAddress, isConnected: true, balance: undefined })
+          await fetchBalance(newAddress)
+        }
+
+        // Handle network change
+        if (newNetwork && wallet.isConnected) {
+          setError('Network changed in Freighter. Please verify you are on the correct network.')
+        }
+      })
+    } catch {
+      // WatchWalletChanges not available, fall back to custom events
+      const handleAccountChanged = async () => {
+        try {
+          const address = await walletService.checkExistingConnection()
+          if (address && address !== wallet.address) {
+            setWallet({ address, isConnected: true, balance: undefined })
+            await fetchBalance(address)
+          } else if (!address && wallet.isConnected) {
+            disconnect()
+          }
+        } catch {
+          disconnect()
+        }
+      }
+
+      const handleNetworkChanged = () => {
+        if (wallet.isConnected) {
+          setError('Network changed in Freighter. Please verify you are on the correct network.')
+        }
+      }
+
+      window.addEventListener('freighter:accountChanged', handleAccountChanged)
+      window.addEventListener('freighter:networkChanged', handleNetworkChanged)
+
+      return () => {
+        window.removeEventListener('freighter:accountChanged', handleAccountChanged)
+        window.removeEventListener('freighter:networkChanged', handleNetworkChanged)
+      }
+    }
+
+    return () => {
+      watcher?.stop()
+    }
+  }, [isInstalled, wallet.address, wallet.isConnected, fetchBalance, disconnect])
 
   // Refresh balance when network changes
   useEffect(() => {

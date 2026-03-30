@@ -1,0 +1,44 @@
+# Soroban Contract Development Dockerfile
+FROM rust:1.75-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install wasm32 target for Rust
+RUN rustup target add wasm32-unknown-unknown
+
+# Install wasm-opt for optimization
+RUN curl -L https://github.com/WebAssembly/binaryen/releases/download/version_116/binaryen-version_116-x86_64-linux.tar.gz \
+    | tar -xz -C /tmp \
+    && cp /tmp/binaryen-version_116/bin/wasm-opt /usr/local/bin/ \
+    && rm -rf /tmp/binaryen-version_116
+
+# Install Stellar CLI
+RUN curl -L https://github.com/stellar/stellar-cli/releases/download/v21.5.0/stellar-cli-21.5.0-x86_64-unknown-linux-gnu.tar.gz \
+    | tar -xz -C /tmp \
+    && mv /tmp/stellar /usr/local/bin/stellar \
+    && chmod +x /usr/local/bin/stellar
+
+# Set working directory
+WORKDIR /contracts
+
+# Copy Cargo files for better caching
+COPY Cargo.toml Cargo.lock ./
+COPY token-factory/Cargo.toml ./token-factory/
+
+# Create dummy source files to cache dependencies
+RUN mkdir -p token-factory/src \
+    && echo "fn main() {}" > token-factory/src/lib.rs \
+    && cargo build --target wasm32-unknown-unknown --release \
+    && rm -rf token-factory/src
+
+# Copy actual source code
+COPY . .
+
+# Default command for interactive development
+CMD ["bash"]

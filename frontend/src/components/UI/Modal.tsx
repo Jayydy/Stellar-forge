@@ -95,17 +95,17 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-scale-in ${className}`}
+        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-3 sm:mx-4 max-h-[90vh] overflow-y-auto animate-scale-in ${className}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-4">
-          <h2 id={titleId} className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4">
+          <h2 id={titleId} className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white pr-2">
             {title}
           </h2>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1 -mr-1"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded p-1 -mr-1 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
           >
             <svg
               className="w-5 h-5"
@@ -125,10 +125,10 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="px-6 pb-4">{children}</div>
+        <div className="px-4 sm:px-6 pb-3 sm:pb-4">{children}</div>
 
         {/* Footer */}
-        {footer && <div className="px-6 pb-6 flex gap-3 justify-end">{footer}</div>}
+        {footer && <div className="px-4 sm:px-6 pb-4 sm:pb-6 flex gap-2 sm:gap-3 justify-end flex-wrap">{footer}</div>}
       </div>
     </div>
   )

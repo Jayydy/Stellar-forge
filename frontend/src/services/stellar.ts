@@ -815,6 +815,34 @@ export class StellarService {
   async getAllTokens(): Promise<TokenInfo[]> {
     return []
   }
+
+  /**
+   * Get all events for a specific token address.
+   * Filters factory events to only those related to the given token.
+   */
+  async getTokenEvents(
+    tokenAddress: string,
+    limit = 20,
+    cursor?: string,
+  ): Promise<GetEventsResult> {
+    const contractId = STELLAR_CONFIG.factoryContractId
+    if (!contractId) {
+      return { events: [], cursor: null }
+    }
+
+    // Fetch events from the factory contract
+    const result = await this.getContractEvents(contractId, limit, cursor)
+
+    // Filter to only events related to this token
+    const tokenEvents = result.events.filter(
+      (event) => event.data.tokenAddress === tokenAddress,
+    )
+
+    return {
+      events: tokenEvents,
+      cursor: result.cursor,
+    }
+  }
 }
 
 export const stellarService = new StellarService()

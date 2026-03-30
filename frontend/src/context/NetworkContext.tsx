@@ -12,6 +12,7 @@ interface NetworkContextValue {
   rpcUrl: string
   horizonUrl: string
   networkPassphrase: string
+  mismatch: NetworkMismatchState
 }
 
 const NetworkContext = createContext<NetworkContextValue | null>(null)

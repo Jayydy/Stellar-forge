@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { ToastContainer, Button, Spinner } from './components/UI'
+import { ToastContainer, WalletButton } from './components/UI'
 import './App.css'
 import { useTranslation } from 'react-i18next'
 import { useDarkMode } from './hooks/useDarkMode'
@@ -20,8 +20,9 @@ import { Home } from './components/Home'
 import { CreateToken } from './components/CreateToken'
 import { MintForm } from './components/MintForm'
 import { BurnForm } from './components/BurnForm'
-import { Dashboard } from './components/Dashboard'
+import { TokenDashboard } from './components/TokenDashboard'
 import { TokenDetail } from './components/TokenDetail'
+import { TokenExplorer } from './components/TokenExplorer'
 import { FAQ } from './components/FAQ'
 import { AdminPanel } from './components/AdminPanel'
 import { useFactoryState } from './hooks/useFactoryState'
@@ -85,18 +86,19 @@ function AppContent() {
 
 <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
   <header className="bg-white/80 shadow-lg backdrop-blur-sm dark:bg-slate-800/95 dark:shadow-slate-900/50 dark:border-b dark:border-slate-700" role="banner">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('app.title')}</h1>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{t('app.subtitle')}</p>
-              </div>
+          <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">{t('app.title')}</h1>
+                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">{t('app.subtitle')}</p>
+                </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <button
                   onClick={toggleTheme}
                   aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                  className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
                 >
                   {theme === 'dark' ? (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -108,76 +110,39 @@ function AppContent() {
                     </svg>
                   )}
                 </button>
-                <LanguageSwitcher />
-                <NetworkSwitcher />
-                <Button 
-                  onClick={toggleDarkMode} 
-                  variant="secondary" 
-                  size="sm" 
-                  className="shrink-0 p-2 rounded-full"
-                  aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {isDarkMode ? '☀️' : '🌙'}
-                </Button>
+                <div className="hidden sm:block">
+                  <LanguageSwitcher />
+                </div>
+                <div className="hidden sm:block">
+                  <NetworkSwitcher />
+                </div>
 
-                {!isInstalled && (
-                  <a
-                    href="https://www.freighter.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {t('wallet.installFreighter')}
-                  </a>
-                )}
-
-                {wallet.isConnected ? (
-                  <div className="flex items-center gap-3">
+                {wallet.isConnected && (
+                  <div className="hidden sm:block">
                     <FundbotButton />
-                    <div className="text-right">
-                      <div
-                        className="text-sm font-medium text-gray-900 dark:text-gray-100"
-                        title={wallet.address ?? undefined}
-                      >
-                        {wallet.address && truncateAddress(wallet.address)}
-                      </div>
-                      <Button onClick={handleDisconnect} variant="secondary" size="sm">
-                        {t('wallet.disconnect')}
-                      </Button>
-                    </div>
                   </div>
-                ) : (
-                  <Button onClick={handleConnect} disabled={isConnecting} size="sm">
-                    {isConnecting ? (
-                      <span className="flex items-center gap-2">
-                        <Spinner size="sm" />
-                        <span className="hidden sm:inline">{t('wallet.connecting')}</span>
-                      </span>
-                    ) : (
-                      t('wallet.connect')
-                    )}
-                  </Button>
                 )}
+                <WalletButton />
+              </div>
+              </div>
+
+              {/* Mobile-only info row */}
+              <div className="flex flex-col gap-2 sm:hidden">
+                {wallet.isConnected && wallet.address && (
+                  <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                    <span className="truncate flex-1 mr-2" title={wallet.address}>
+                      {truncateAddress(wallet.address)}
+                    </span>
+                    {wallet.balance && <span className="shrink-0">{formatXLM(wallet.balance)}</span>}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <LanguageSwitcher />
+                  <NetworkSwitcher />
+                  {wallet.isConnected && <FundbotButton />}
+                </div>
               </div>
             </div>
-
-            {wallet.isConnected && wallet.address && (
-              <div className="sm:hidden text-xs text-gray-600 dark:text-gray-400 truncate" title={wallet.address}>
-                {truncateAddress(wallet.address)}
-                {wallet.balance && <span className="ml-2">{formatXLM(wallet.balance)}</span>}
-              </div>
-            )}
-
-            {!isInstalled && (
-              <a
-                href="https://www.freighter.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sm:hidden text-xs text-blue-600 hover:text-blue-800 underline"
-              >
-                {t('wallet.installFreighter')}
-              </a>
-            )}
 
             <NavBar onHelpClick={() => setShowOnboarding(true)} isAdmin={isAdmin} />
           </div>
@@ -197,29 +162,14 @@ function AppContent() {
         <div id="main-content" className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
             {error && (
               <div
-                className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300 px-4 py-3 rounded-lg"
+                className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300 px-3 sm:px-4 py-3 rounded-lg text-sm"
                 role="alert"
               >
                 <p className="font-medium">{t('errors.title')}</p>
-                <p className="text-sm">{error}</p>
+                <p className="text-xs sm:text-sm mt-1">{error}</p>
               </div>
             )}
 
-            <div className="border-4 border-dashed border-gray-200 rounded-lg p-8 mb-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                  Welcome to Nova Launch
-                </h2>
-                <p className="text-gray-600 mb-8">
-                  Deploy your custom tokens on Stellar blockchain
-                </p>
-                <button
-                  onClick={handleGetStarted}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Get Started
-                </button>
-              </div>
             <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm">
               <Routes>
                 <Route
@@ -265,7 +215,7 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <ErrorBoundary>
-                        <Dashboard />
+                        <TokenDashboard />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
@@ -278,6 +228,14 @@ function AppContent() {
                         <TokenDetail />
                       </ErrorBoundary>
                     </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/explorer"
+                  element={
+                    <ErrorBoundary>
+                      <TokenExplorer />
+                    </ErrorBoundary>
                   }
                 />
                 <Route

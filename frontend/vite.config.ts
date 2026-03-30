@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { writeFileSync } from 'fs'
+import { writeFileSync, mkdirSync } from 'fs'
 import { resolve } from 'path'
 
 function healthJsonPlugin() {
@@ -13,7 +13,9 @@ function healthJsonPlugin() {
         version: process.env.VITE_APP_VERSION ?? '0.0.0',
         timestamp: new Date().toISOString(),
       }
-      writeFileSync(resolve(__dirname, 'dist/health.json'), JSON.stringify(health, null, 2))
+      const distPath = resolve(__dirname, 'dist')
+      mkdirSync(distPath, { recursive: true })
+      writeFileSync(resolve(distPath, 'health.json'), JSON.stringify(health, null, 2))
     },
   }
 }

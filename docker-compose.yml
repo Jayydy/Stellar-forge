@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code for hot reloading
+      - ./frontend:/app
+      # Exclude node_modules to avoid conflicts
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
+    tty: true
+
+  contract-builder:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile.dev
+    volumes:
+      # Mount contracts source for hot reloading
+      - ./contracts:/contracts
+      # Mount target directory to persist builds
+      - contracts_target:/contracts/target
+    working_dir: /contracts
+    stdin_open: true
+    tty: true
+    command: bash -c "echo 'Contract builder ready. Run: docker compose exec contract-builder bash' && tail -f /dev/null"
+
+volumes:
+  contracts_target:

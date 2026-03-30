@@ -57,22 +57,22 @@ const Dashboard: React.FC<DashboardProps> = memo(() => {
   return (
     <div className="space-y-4">
       {/* FilterBar */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 min-w-0">
           <Input
             label="Search by name or symbol"
             value={searchQuery}
             onChange={handleSearchChange}
           />
         </div>
-        <div className="flex-1 min-w-[200px]">
+        <div className="flex-1 min-w-0">
           <Input
             label="Filter by creator address"
             value={creatorFilter}
             onChange={handleCreatorChange}
           />
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1 w-full sm:w-auto sm:min-w-[180px]">
           <label htmlFor="sort-order" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Sort order
           </label>
@@ -97,39 +97,37 @@ const Dashboard: React.FC<DashboardProps> = memo(() => {
         </button>
       </div>
 
-      {error && (
-        <Card>
-          <p role="alert" className="text-red-600 dark:text-red-400 text-sm">{error.message}</p>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <ul className="space-y-3" aria-label="Loading tokens" aria-busy="true">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <TokenCardSkeleton key={i} />
-          ))}
-        </ul>
-      ) : filteredTokens.length === 0 ? (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+      {filteredTokens.length === 0 ? (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm sm:text-base">
           {isFilterActive
             ? 'No tokens match your search.'
             : 'No tokens have been deployed yet.'}
         </p>
       ) : (
-        <>
-          <ul className="space-y-3">
-            {filteredTokens.map((token) => (
-              <TokenCard key={token.address} token={token} />
-            ))}
-          </ul>
-          {totalPages > 1 && (
-            <PaginationControls
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
-          )}
-        </>
+        <ul className="space-y-3">
+          {filteredTokens.map((token, i) => (
+            <li key={i}>
+              <Card>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">{token.name}</span>
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({token.symbol})</span>
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">Decimals: {token.decimals}</span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                  <div>
+                    <span className="font-medium">Total Supply:</span> {token.totalSupply}
+                  </div>
+                  <div className="break-all sm:truncate">
+                    <span className="font-medium">Creator:</span>{' '}
+                    <span className="font-mono text-xs">{token.creator}</span>
+                  </div>
+                </div>
+              </Card>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )
