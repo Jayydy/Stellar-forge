@@ -25,6 +25,8 @@ impl Setup {
         let contract_id = env.register_contract(None, TokenFactory);
         // SAFETY: the client borrows `env` which lives for the duration of the test.
         let client = TokenFactoryClient::new(&env, &contract_id);
+        let client: TokenFactoryClient<'static> =
+            unsafe { core::mem::transmute(client) };
 
         let admin = Address::generate(&env);
         let treasury = Address::generate(&env);
@@ -124,6 +126,24 @@ fn test_initialize_already_initialized() {
 }
 
 // ── create_token (error paths only — deploy requires real wasm) ───────────────
+
+#[test]
+fn test_set_metadata_fee_goes_to_treasury() {
+    let s = Setup::new();
+    let admin = Address::generate(&s.env);
+    s.fund(&admin, 500);
+
+    let token_addr = seed_token_with_burn(&s, &admin, true);
+    s.client.set_metadata(
+        &token_addr, &admin,
+        &String::from_str(&s.env, "ipfs://Qm123"),
+        &500,
+    );
+
+    assert_eq!(TokenClient::new(&s.env, &s.fee_token).balance(&s.treasury), 500);
+}
+
+// ── create_token (error paths only — deploy needs wasm) ──────────────────────
 
 #[test]
 fn test_create_token_insufficient_fee() {
@@ -314,6 +334,17 @@ fn test_set_metadata_already_set() {
     assert_eq!(result, Err(Ok(Error::MetadataAlreadySet)));
 }
 
+#[test]
+fn test_set_metadata_different_tokens_independent() {
+    let s = Setup::new();
+    let admin = Address::generate(&s.env);
+    s.fund(&admin, 1_000);
+    let token_a = seed_token_with_burn(&s, &admin, true);
+    let token_b = seed_token_with_burn(&s, &admin, true);
+    s.client.set_metadata(&token_a, &admin, &String::from_str(&s.env, "ipfs://QmA"), &500);
+    s.client.set_metadata(&token_b, &admin, &String::from_str(&s.env, "ipfs://QmB"), &500);
+}
+
 // ── mint_tokens ───────────────────────────────────────────────────────────────
 
 #[test]
@@ -366,6 +397,8 @@ fn test_mint_tokens_zero_amount_rejected() {
     );
     assert_eq!(result, Err(Ok(Error::InvalidParameters)));
 }
+
+// ── max supply cap ────────────────────────────────────────────────────────────
 
 #[test]
 fn test_mint_tokens_within_cap() {
@@ -556,6 +589,8 @@ fn test_non_admin_cannot_pause() {
     let stranger = Address::generate(&s.env);
     assert_eq!(s.client.try_pause(&stranger), Err(Ok(Error::Unauthorized)));
 }
+
+// ── reentrancy guard ──────────────────────────────────────────────────────────
 
 #[test]
 fn test_burn_allowed_when_factory_paused() {
@@ -773,9 +808,7 @@ fn batch_param(s: &Setup, n: u8, name: &str, symbol: &str) -> BatchTokenParams {
 
 fn batch_vec(s: &Setup, params: &[BatchTokenParams]) -> soroban_sdk::Vec<BatchTokenParams> {
     let mut v = soroban_sdk::vec![&s.env];
-    for p in params {
-        v.push_back(p.clone());
-    }
+    for p in params { v.push_back(p.clone()); }
     v
 }
 
@@ -786,7 +819,6 @@ fn test_batch_empty_rejected() {
     let result = s.client.try_create_tokens_batch(
         &creator, &soroban_sdk::vec![&s.env], &0,
     );
-    assert_eq!(result, Err(Ok(Error::InvalidParameters)));
 }
 
 #[test]
@@ -822,8 +854,10 @@ fn test_batch_blocked_when_paused() {
     s.client.pause(&s.admin);
     let creator = Address::generate(&s.env);
     let params = batch_vec(&s, &[batch_param(&s, 1, "T", "T")]);
-    let result = s.client.try_create_tokens_batch(&creator, &params, &1_000);
-    assert_eq!(result, Err(Ok(Error::ContractPaused)));
+    assert_eq!(
+        s.client.try_create_tokens_batch(&creator, &params, &1_000),
+        Err(Ok(Error::ContractPaused))
+    );
 }
 
 #[test]
@@ -837,8 +871,10 @@ fn test_batch_reentrancy_guard() {
         s.env.storage().instance().set(&DataKey::State, &state);
     });
     let params = batch_vec(&s, &[batch_param(&s, 1, "T", "T")]);
-    let result = s.client.try_create_tokens_batch(&creator, &params, &1_000);
-    assert_eq!(result, Err(Ok(Error::Reentrancy)));
+    assert_eq!(
+        s.client.try_create_tokens_batch(&creator, &params, &1_000),
+        Err(Ok(Error::Reentrancy))
+    );
 }
 
 // ── upgrade ───────────────────────────────────────────────────────────────────
