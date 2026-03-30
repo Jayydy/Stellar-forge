@@ -42,38 +42,38 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-modal-title"
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
           <h2
             id="confirm-modal-title"
-            className="text-xl font-semibold text-gray-900 dark:text-gray-100"
+            className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100"
           >
             {title}
           </h2>
 
-          {description && <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>}
+          {description && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{description}</p>}
 
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg divide-y divide-gray-200 dark:divide-gray-600">
             {details.map(({ label, value }) => (
-              <div key={label} className="flex justify-between px-4 py-2 text-sm">
-                <span className="text-gray-500 dark:text-gray-400">{label}</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100 text-right max-w-[60%] break-all">
+              <div key={label} className="flex flex-col sm:flex-row sm:justify-between px-3 sm:px-4 py-2 text-xs sm:text-sm gap-1">
+                <span className="text-gray-500 dark:text-gray-400 font-medium">{label}</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100 break-all">
                   {value}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="flex gap-3 justify-end pt-2">
-            <Button ref={cancelRef} variant="outline" onClick={onCancel}>
+          <div className="flex gap-2 sm:gap-3 justify-end pt-2 flex-wrap">
+            <Button ref={cancelRef} variant="outline" onClick={onCancel} className="flex-1 sm:flex-initial">
               Cancel
             </Button>
-            <Button variant="primary" onClick={onConfirm}>
+            <Button variant="primary" onClick={onConfirm} className="flex-1 sm:flex-initial">
               {confirmLabel}
             </Button>
           </div>

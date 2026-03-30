@@ -2,7 +2,9 @@
   "app": {
     "title": "StellarForge",
     "subtitle": "Stellar Token Deployer",
-    "skipToMain": "Skip to main content"
+    "skipToMain": "Skip to main content",
+    "toggleDarkMode": "Toggle dark mode",
+    "factoryWarning": "Factory contract not configured. Please set VITE_FACTORY_CONTRACT_ID in your .env file."
   },
   "nav": {
     "home": "Home",
@@ -99,7 +101,11 @@
     "searchLabel": "Search tokens",
     "searchPlaceholder": "Search by address or name...",
     "recentActivity": "Recent Activity",
-    "copyError": "Unable to copy token address. Check browser clipboard permissions and try again."
+    "copyError": "Unable to copy token address. Check browser clipboard permissions and try again.",
+    "refresh": "Refresh",
+    "noTokens": "No tokens have been deployed yet.",
+    "noSearchMatch": "No tokens match your search.",
+    "creatorPrefix": "Creator:"
   },
   "tokenDetail": {
     "title": "Token Detail",
@@ -117,7 +123,10 @@
       "tokens_minted": "Tokens Minted",
       "tokens_burned": "Tokens Burned",
       "metadata_set": "Metadata Set",
-      "fees_updated": "Fees Updated"
+      "fees_updated": "Fees Updated",
+      "create": "Created",
+      "mint": "Minted",
+      "burn": "Burned"
     },
     "dataLabels": {
       "token": "Token",

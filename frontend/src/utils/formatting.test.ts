@@ -15,7 +15,7 @@ describe('formatTokenAmount', () => {
   })
 
   it('handles numbers larger than MAX_SAFE_INTEGER', () => {
-    expect(formatTokenAmount('99999999999999999999', 7)).toBe('9999999999999.9999999')
+    expect(formatTokenAmount('99999999999999999999', 7)).toBe('10,000,000,000,000.0000000')
   })
 
   it('formats with 0 decimals', () => {

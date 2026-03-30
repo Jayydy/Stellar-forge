@@ -20,9 +20,8 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
-    // Errors are surfaced in the fallback UI; no console noise needed.
-    // Wire a real error reporter (e.g. Sentry) here if required.
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('[ErrorBoundary] Uncaught error:', error, errorInfo.componentStack)
   }
 
   render(): ReactNode {

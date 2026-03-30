@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { mockFreighter } from './helpers/wallet-mock';
 import { fundAccount } from './helpers/e2e-setup';
 
 test.describe('Token Creation', () => {
   const TEST_ADDRESS = 'GCV6L3B2R6G2H5J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4';
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     // 1. Mock Freighter
     await mockFreighter(page, TEST_ADDRESS);
     
@@ -21,7 +21,7 @@ test.describe('Token Creation', () => {
     await page.getByRole('button', { name: /Connect Wallet/i }).click();
   });
 
-  test('should create a new token successfully', async ({ page }) => {
+  test('should create a new token successfully', async ({ page }: { page: Page }) => {
     // 1. Navigate to Create Token page
     await page.getByRole('link', { name: /Create Token/i }).first().click();
 

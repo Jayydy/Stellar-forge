@@ -1,10 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { mockFreighter } from './helpers/wallet-mock';
 
 test.describe('Token Dashboard', () => {
   const TEST_ADDRESS = 'GCV6L3B2R6G2H5J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4';
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     // 1. Mock Freighter
     await mockFreighter(page, TEST_ADDRESS);
     
@@ -13,7 +13,7 @@ test.describe('Token Dashboard', () => {
     await page.getByRole('button', { name: /Connect Wallet/i }).click();
   });
 
-  test('should load dashboard and display tokens', async ({ page }) => {
+  test('should load dashboard and display tokens', async ({ page }: { page: Page }) => {
     // 1. Navigate to Dashboard
     await page.getByRole('link', { name: /My Tokens|Dashboard/i }).first().click();
 

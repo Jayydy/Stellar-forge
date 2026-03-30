@@ -7,13 +7,32 @@ export interface RetryOptions {
 }
 
 const DEFAULT_MAX_ATTEMPTS = 3
-const DEFAULT_BASE_DELAY_MS = 500
+const DEFAULT_BASE_DELAY_MS = 1000 // Increased from 500ms
+
+/**
+ * Custom error class for HTTP-related failures
+ */
+export class HttpError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public retryAfter?: number
+  ) {
+    super(message)
+    this.name = 'HttpError'
+  }
+}
 
 /**
  * Determines if an error is transient and should be retried
  */
 export const isTransientError = (error: unknown): boolean => {
   if (!error) return false
+
+  // If it's our custom HttpError, check status
+  if (error instanceof HttpError) {
+    return error.status === 429 || (error.status >= 500 && error.status < 600)
+  }
 
   const err = error as Record<string, unknown>
   const errorMessage = (err.message as string)?.toLowerCase() || ''
@@ -28,6 +47,7 @@ export const isTransientError = (error: unknown): boolean => {
     'etimedout',
     'fetch failed',
     'failed to fetch',
+    'aborted',
   ]
 
   // RPC/Server errors - should retry
@@ -67,20 +87,17 @@ export const isTransientError = (error: unknown): boolean => {
     }
   }
 
-  // HTTP status codes
-  if (err.status) {
-    const status = err.status as number
-    // Retry on 5xx server errors and 429 rate limit
+  // HTTP status codes (Generic handle)
+  if (typeof err.status === 'number') {
+    const status = err.status
     if (status === 429 || (status >= 500 && status < 600)) {
       return true
     }
-    // Don't retry on 4xx client errors (except 429)
     if (status >= 400 && status < 500) {
       return false
     }
   }
 
-  // Default: don't retry unknown errors
   return false
 }
 
@@ -126,3 +143,4 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
   // All attempts failed
   throw lastError
 }
+

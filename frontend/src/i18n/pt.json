@@ -1,0 +1,164 @@
+{
+  "app": {
+    "title": "StellarForge",
+    "subtitle": "Implantador de Tokens Stellar",
+    "skipToMain": "Saltar para o conteúdo principal",
+    "toggleDarkMode": "Alternar modo escuro",
+    "factoryWarning": "Contrato de fábrica não configurado. Por favor, defina VITE_FACTORY_CONTRACT_ID no seu arquivo .env."
+  },
+  "nav": {
+    "home": "Início",
+    "create": "Criar",
+    "mint": "Emitir",
+    "burn": "Queimar",
+    "tokens": "Tokens",
+    "ariaLabel": "Principal",
+    "openMenu": "Abrir menu de navegação",
+    "closeMenu": "Fechar menu de navegação",
+    "help": "Ajuda",
+    "helpAriaLabel": "Abrir tutorial"
+  },
+  "wallet": {
+    "connect": "Conectar Carteira",
+    "connecting": "Conectando...",
+    "disconnect": "Desconectar",
+    "installFreighter": "Instalar Freighter",
+    "connected": "Carteira conectada",
+    "disconnected": "Carteira desconectada",
+    "connectFailed": "Falha ao conectar carteira"
+  },
+  "home": {
+    "welcome": "Bem-vindo ao Nova Launch",
+    "description": "Implante seus tokens personalizados no blockchain Stellar",
+    "getStarted": "Começar",
+    "navHint": "Use a barra de navegação acima para acessar Criar, Emitir, Queimar ou Tokens.",
+    "welcomeToast": "Bem-vindo! Vamos implantar seu token."
+  },
+  "createToken": {
+    "title": "Criar Token",
+    "placeholder": "Marcador de posição para a página Criar Token",
+    "description": "Implementação futura: formulário de emissão de tokens e fluxo de implantação em cadeia."
+  },
+  "tokenForm": {
+    "tokenName": "Nome do Token",
+    "tokenNamePlaceholder": "Meu Token",
+    "tokenSymbol": "Símbolo do Token",
+    "tokenSymbolPlaceholder": "MTK",
+    "decimals": "Decimais",
+    "initialSupply": "Suprimento Inicial",
+    "initialSupplyPlaceholder": "1000000",
+    "descriptionLabel": "Descrição (Opcional)",
+    "descriptionPlaceholder": "Descreva seu token...",
+    "deploy": "Implantar Token",
+    "deploying": "Implantando...",
+    "deploySuccess": "Token implantado com sucesso!",
+    "deployFailed": "Falha na implantação do token",
+    "deployError": "Ocorreu um erro durante a implantação",
+    "invalidName": "Nome de token inválido",
+    "invalidSymbol": "Símbolo de token inválido",
+    "invalidDecimals": "Decimais devem estar entre 0 e 18"
+  },
+  "mintForm": {
+    "tokenAddress": "Endereço do Token",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Quantidade",
+    "amountPlaceholder": "0",
+    "mint": "Emitir",
+    "tokenFound": "Token encontrado:"
+  },
+  "burnForm": {
+    "tokenAddress": "Endereço do Token",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Quantidade",
+    "amountPlaceholder": "0",
+    "burn": "Queimar",
+    "tokenFound": "Token encontrado:"
+  },
+  "setMetadata": {
+    "tokenAddress": "Endereço do Token",
+    "tokenAddressPlaceholder": "G...",
+    "metadataUri": "URI de Metadados",
+    "metadataUriPlaceholder": "ipfs://Qm...",
+    "submit": "Definir Metadatos",
+    "submitting": "Enviando...",
+    "success": "Metadatos atualizados com sucesso",
+    "invalidUri": "URI de metadados deve ser uma URI IPFS válida (ex. ipfs://Qm...)"
+  },
+  "dashboard": {
+    "searchLabel": "Pesquisar tokens",
+    "searchPlaceholder": "Pesquisar por endereço ou nome...",
+    "recentActivity": "Atividade Recente",
+    "copyError": "Não foi possível copiar o endereço do token. Verifique as permissões da área de transferência do navegador e tente novamente.",
+    "refresh": "Atualizar",
+    "noTokens": "Nenhum token foi implantado ainda.",
+    "noSearchMatch": "Nenhum token corresponde à sua pesquisa.",
+    "creatorPrefix": "Criador:"
+  },
+  "tokenDetail": {
+    "title": "Detalhe do Token",
+    "loading": "Carregando token {{address}}...",
+    "loadError": "Não foi possível carregar o token"
+  },
+  "transactionHistory": {
+    "noEvents": "Nenhum evento encontrado.",
+    "loadMore": "Carregar mais",
+    "retry": "Repetir",
+    "loadFailed": "Falha ao carregar eventos",
+    "loadMoreFailed": "Falha ao carregar mais eventos",
+    "eventLabels": {
+      "token_created": "Token Criado",
+      "tokens_minted": "Tokens Emitidos",
+      "tokens_burned": "Tokens Queimados",
+      "metadata_set": "Metadatos Definidos",
+      "fees_updated": "Taxas Atualizadas",
+      "create": "Criado",
+      "mint": "Emitido",
+      "burn": "Queimado"
+    },
+    "dataLabels": {
+      "token": "Token",
+      "creator": "Criador",
+      "to": "Para",
+      "from": "De",
+      "amount": "Quantidade",
+      "uri": "URI",
+      "baseFee": "Taxa base",
+      "metadataFee": "Taxa de metadatos",
+      "tx": "transação"
+    }
+  },
+  "networkSwitcher": {
+    "ariaLabel": "Rede ativa: {{network}}. Clique para alternar.",
+    "selectNetwork": "Selecionar rede",
+    "testnet": "Rede de teste",
+    "mainnet": "Rede principal",
+    "switchToMainnet": "Mudar para Rede Principal?",
+    "switchWarning": "Você está mudando para a rede principal. Fundos reais serão usados. Certifique-se de saber o que está fazendo.",
+    "confirm": "Mudar para Rede Principal",
+    "cancel": "Cancelar"
+  },
+  "mainnetModal": {
+    "title": "Análise de Implantação na Rede Principal",
+    "warning": "⚠️ Esta ação não pode ser desfeita e custará XLM reais",
+    "tokenParams": "Parâmetros do Token",
+    "name": "Nome:",
+    "symbol": "Símbolo:",
+    "decimals": "Decimais:",
+    "initialSupply": "Suprimento Inicial:",
+    "description": "Descrição:",
+    "image": "Imagem:",
+    "confirmLabel": "Digite \"{{symbol}}\" para confirmar a implantação",
+    "confirmHelp": "Esta confirmação garante que você revisou todos os parâmetros cuidadosamente.",
+    "cancel": "Cancelar",
+    "deploy": "Implantar na Rede Principal"
+  },
+  "errors": {
+    "title": "Erro"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "Inglês",
+    "es": "Espanhol",
+    "pt": "Português"
+  }
+}

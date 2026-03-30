@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useLocalStorage } from './useLocalStorage'
 
 export function useDarkMode() {
-  const [dark, setDark] = useState<boolean>(() => {
-    const stored = localStorage.getItem('darkMode')
-    if (stored !== null) return stored === 'true'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  const [dark, setDark] = useLocalStorage<boolean>(
+    'darkMode',
+    window.matchMedia('(prefers-color-scheme: dark)').matches,
+  )
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('darkMode', String(dark))
   }, [dark])
 
   return [dark, setDark] as const

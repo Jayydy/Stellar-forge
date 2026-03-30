@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Input, Button, ConfirmModal } from './UI'
+import { Input, Button, ConfirmModal, InsufficientBalanceWarning } from './UI'
 import { isValidIPFSUri } from '../utils/validation'
 import { useToast } from '../context/ToastContext'
+import { useBalanceCheck } from '../hooks/useBalanceCheck'
 import { isIpfsConfigured } from '../config/env'
 
 const ESTIMATED_FEE = '0.01' // XLM
+const ESTIMATED_FEE_XLM = 0.01
 
 interface Props {
   tokenAddress?: string
@@ -23,6 +25,7 @@ export const SetMetadataForm: React.FC<Props> = ({
   const [pending, setPending] = useState(false)
   const { addToast } = useToast()
   const ipfsReady = isIpfsConfigured()
+  const { hasSufficientBalance, shortfall, isTestnet } = useBalanceCheck(ESTIMATED_FEE_XLM)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,10 +79,13 @@ export const SetMetadataForm: React.FC<Props> = ({
           disabled={!ipfsReady}
         />
         <div title={!ipfsReady ? 'IPFS credentials are not configured' : undefined}>
-          <Button type="submit" disabled={loading || !ipfsReady}>
+          <Button type="submit" disabled={loading || !ipfsReady || !hasSufficientBalance}>
             {loading ? 'Submitting...' : 'Set Metadata'}
           </Button>
         </div>
+        {!hasSufficientBalance && (
+          <InsufficientBalanceWarning shortfall={shortfall} isTestnet={isTestnet} />
+        )}
       </form>
 
       <ConfirmModal

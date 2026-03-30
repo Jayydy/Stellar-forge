@@ -1,11 +1,13 @@
 import { truncateAddress, stellarExplorerUrl } from '../utils/formatting'
 import { CopyButton } from './CopyButton'
+import type { Network } from '../context/NetworkContext'
 
 interface AddressDisplayProps {
   address: string
   type: 'account' | 'contract'
   showCopy?: boolean
   showExplorer?: boolean
+  network?: Network
 }
 
 export const AddressDisplay = ({
@@ -13,6 +15,7 @@ export const AddressDisplay = ({
   type,
   showCopy = true,
   showExplorer = true,
+  network = 'testnet',
 }: AddressDisplayProps) => {
   return (
     <span className="inline-flex items-center gap-1 font-mono text-sm">
@@ -25,7 +28,7 @@ export const AddressDisplay = ({
 
       {showExplorer && (
         <a
-          href={stellarExplorerUrl(type, address)}
+          href={stellarExplorerUrl(type, address, network)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="View on Stellar Explorer"

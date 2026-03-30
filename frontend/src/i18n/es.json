@@ -1,0 +1,164 @@
+{
+  "app": {
+    "title": "StellarForge",
+    "subtitle": "Desplegador de Tokens Stellar",
+    "skipToMain": "Saltar al contenido principal",
+    "toggleDarkMode": "Alternar modo oscuro",
+    "factoryWarning": "Contrato de fábrica no configurado. Por favor, establezca VITE_FACTORY_CONTRACT_ID en su archivo .env."
+  },
+  "nav": {
+    "home": "Inicio",
+    "create": "Crear",
+    "mint": "Emitir",
+    "burn": "Quemar",
+    "tokens": "Tokens",
+    "ariaLabel": "Primario",
+    "openMenu": "Abrir menú de navegación",
+    "closeMenu": "Cerrar menú de navegación",
+    "help": "Ayuda",
+    "helpAriaLabel": "Abrir tutorial"
+  },
+  "wallet": {
+    "connect": "Conectar Billetera",
+    "connecting": "Conectando...",
+    "disconnect": "Desconectar",
+    "installFreighter": "Instalar Freighter",
+    "connected": "Billetera conectada",
+    "disconnected": "Billetera desconectada",
+    "connectFailed": "Error al conectar la billetera"
+  },
+  "home": {
+    "welcome": "Bienvenido a Nova Launch",
+    "description": "Despliegue sus tokens personalizados en la cadena de bloques Stellar",
+    "getStarted": "Empezar",
+    "navHint": "Use la navegación de arriba para ir a Crear, Emitir, Quemar o Tokens.",
+    "welcomeToast": "¡Bienvenido! Vamos a desplegar tu token."
+  },
+  "createToken": {
+    "title": "Crear Token",
+    "placeholder": "Marcador de posición para la página Crear Token",
+    "description": "Implementación futura: formulario de emisión de tokens y flujo de despliegue en cadena."
+  },
+  "tokenForm": {
+    "tokenName": "Nombre del Token",
+    "tokenNamePlaceholder": "Mi Token",
+    "tokenSymbol": "Símbolo del Token",
+    "tokenSymbolPlaceholder": "MTK",
+    "decimals": "Decimales",
+    "initialSupply": "Suministro Inicial",
+    "initialSupplyPlaceholder": "1000000",
+    "descriptionLabel": "Descripción (Opcional)",
+    "descriptionPlaceholder": "Describe tu token...",
+    "deploy": "Desplegar Token",
+    "deploying": "Desplegando...",
+    "deploySuccess": "¡Token desplegado con éxito!",
+    "deployFailed": "Error al desplegar el token",
+    "deployError": "Ocurrió un error durante el despliegue",
+    "invalidName": "Nombre de token inválido",
+    "invalidSymbol": "Símbolo de token inválido",
+    "invalidDecimals": "Los decimales deben estar entre 0 y 18"
+  },
+  "mintForm": {
+    "tokenAddress": "Dirección del Token",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Cantidad",
+    "amountPlaceholder": "0",
+    "mint": "Emitir",
+    "tokenFound": "Token encontrado:"
+  },
+  "burnForm": {
+    "tokenAddress": "Dirección del Token",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Cantidad",
+    "amountPlaceholder": "0",
+    "burn": "Quemar",
+    "tokenFound": "Token encontrado:"
+  },
+  "setMetadata": {
+    "tokenAddress": "Dirección del Token",
+    "tokenAddressPlaceholder": "G...",
+    "metadataUri": "URI de Metadatos",
+    "metadataUriPlaceholder": "ipfs://Qm...",
+    "submit": "Establecer Metadatos",
+    "submitting": "Enviando...",
+    "success": "Metadatos actualizados con éxito",
+    "invalidUri": "La URI de metadatos debe ser una URI de IPFS válida (ej. ipfs://Qm...)"
+  },
+  "dashboard": {
+    "searchLabel": "Buscar tokens",
+    "searchPlaceholder": "Buscar por dirección o nombre...",
+    "recentActivity": "Actividad Reciente",
+    "copyError": "No se pudo copiar la dirección del token. Verifique los permisos del portapapeles del navegador e intente de nuevo.",
+    "refresh": "Actualizar",
+    "noTokens": "Aún no se han desplegado tokens.",
+    "noSearchMatch": "Ningún token coincide con su búsqueda.",
+    "creatorPrefix": "Creador:"
+  },
+  "tokenDetail": {
+    "title": "Detalle del Token",
+    "loading": "Cargando token {{address}}...",
+    "loadError": "No se pudo cargar el token"
+  },
+  "transactionHistory": {
+    "noEvents": "No se encontraron eventos.",
+    "loadMore": "Cargar más",
+    "retry": "Reintentar",
+    "loadFailed": "Error al cargar eventos",
+    "loadMoreFailed": "Error al cargar más eventos",
+    "eventLabels": {
+      "token_created": "Token Creado",
+      "tokens_minted": "Tokens Emitidos",
+      "tokens_burned": "Tokens Quemados",
+      "metadata_set": "Metadatos Establecidos",
+      "fees_updated": "Tarifas Actualizadas",
+      "create": "Creado",
+      "mint": "Emitido",
+      "burn": "Quemado"
+    },
+    "dataLabels": {
+      "token": "Token",
+      "creator": "Creador",
+      "to": "Para",
+      "from": "De",
+      "amount": "Cantidad",
+      "uri": "URI",
+      "baseFee": "Tarifa base",
+      "metadataFee": "Tarifa de metadatos",
+      "tx": "transacción"
+    }
+  },
+  "networkSwitcher": {
+    "ariaLabel": "Red activa: {{network}}. Haga clic para cambiar.",
+    "selectNetwork": "Seleccionar red",
+    "testnet": "Red de prueba",
+    "mainnet": "Red principal",
+    "switchToMainnet": "¿Cambiar a la red principal?",
+    "switchWarning": "Está cambiando a la red principal. Se utilizarán fondos reales. Asegúrese de saber lo que está haciendo.",
+    "confirm": "Cambiar a red principal",
+    "cancel": "Cancelar"
+  },
+  "mainnetModal": {
+    "title": "Revisión de Despliegue en Red Principal",
+    "warning": "⚠️ Esta acción no se puede deshacer y costará XLM reales",
+    "tokenParams": "Parámetros del Token",
+    "name": "Nombre:",
+    "symbol": "Símbolo:",
+    "decimals": "Decimales:",
+    "initialSupply": "Suministro Inicial:",
+    "description": "Descripción:",
+    "image": "Imagen:",
+    "confirmLabel": "Escriba \"{{symbol}}\" para confirmar el despliegue",
+    "confirmHelp": "Esta confirmación asegura que ha revisado todos los parámetros cuidadosamente.",
+    "cancel": "Cancelar",
+    "deploy": "Desplegar en Red Principal"
+  },
+  "errors": {
+    "title": "Error"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "Inglés",
+    "es": "Español",
+    "pt": "Portugués"
+  }
+}

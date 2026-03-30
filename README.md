@@ -1,5 +1,7 @@
 # StellarForge - Stellar Token Deployer
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Ejirowebfi/Stellar-forge&root=frontend&env=VITE_FACTORY_CONTRACT_ID,VITE_TOKEN_WASM_HASH,VITE_IPFS_API_KEY,VITE_IPFS_API_SECRET&envDescription=Required%20environment%20variables%20for%20StellarForge&envLink=https://github.com/Ejirowebfi/Stellar-forge/blob/main/docs/deployment-vercel.md)
+
 StellarForge is a user-friendly decentralized application (dApp) that enables creators, entrepreneurs, and businesses in emerging markets to deploy custom tokens on the Stellar blockchain without writing a single line of code.
 
 ## Features
@@ -42,6 +44,30 @@ StellarForge is a user-friendly decentralized application (dApp) that enables cr
 - **Freighter Wallet**: Browser extension for Stellar transactions
 
 ## Installation & Setup
+
+You can set up StellarForge using either Docker (recommended for quick start) or local installation.
+
+### Option 1: Docker Setup (Recommended)
+
+**Prerequisites**: Docker and Docker Compose
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd stellar-forge
+
+# Start development environment
+docker compose up -d
+
+# Frontend available at: http://localhost:5173
+# Access contract builder: docker compose exec contract-builder bash
+```
+
+See [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed Docker instructions.
+
+### Option 2: Local Installation
+
+**Prerequisites**: Rust, Node.js (v18+), Stellar CLI, Freighter Wallet
 
 ### 1. Clone the Repository
 ```bash
@@ -161,41 +187,233 @@ npm run lint         # Lint code
 
 ## Deployment
 
-### Contract Deployment
+### Testnet Deployment Guide
+
+This guide walks you through deploying StellarForge to Stellar testnet from scratch.
+
+#### Prerequisites
+
+- Stellar CLI installed (run `./scripts/setup-soroban.sh` if not)
+- Freighter wallet installed in your browser
+- Basic understanding of command line
+
+#### Step 1: Get Testnet XLM
+
+You need testnet XLM to pay for contract deployment and transactions.
+
+1. **Create a testnet account** using Stellar CLI:
+   ```bash
+   stellar keys generate deployer --network testnet
+   ```
+   This creates a new keypair and saves it locally. The output shows your public key.
+
+2. **Fund your account** using Friendbot:
+   ```bash
+   stellar keys address deployer
+   # Copy the address (starts with G...)
+   
+   # Fund with 10,000 testnet XLM
+   curl "https://friendbot.stellar.org?addr=YOUR_ADDRESS_HERE"
+   ```
+
+3. **Verify your balance**:
+   ```bash
+   stellar account balance deployer --network testnet
+   ```
+   You should see 10,000 XLM.
+
+#### Step 2: Build the Contract
+
 ```bash
-# Build the contract
 cd contracts/token-factory
+
+# Build the contract
 cargo build --target wasm32-unknown-unknown --release
 
-# Optimize the binary (reduces size and lowers deployment costs)
+# Optimize the binary (reduces size and deployment costs)
 stellar contract optimize \
   --wasm ../../target/wasm32-unknown-unknown/release/token_factory.wasm
+```
 
+The optimized WASM will be at `../../target/wasm32-unknown-unknown/release/token_factory.optimized.wasm`.
+
+#### Step 3: Deploy the Factory Contract
+
+```bash
 # Deploy to testnet
 stellar contract deploy \
   --wasm ../../target/wasm32-unknown-unknown/release/token_factory.optimized.wasm \
-  --source <your-secret-key> \
+  --source deployer \
   --network testnet
+
+# Save the contract ID (starts with C...)
+# Example output: CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Save this contract ID** - you'll need it for initialization and frontend configuration.
+
+#### Step 4: Upload Token Contract WASM
+
+The factory needs the token contract WASM hash to deploy tokens.
+
+```bash
+# First, build the standard Stellar token contract
+# (or use your custom token implementation)
+stellar contract install \
+  --wasm path/to/soroban_token_contract.wasm \
+  --source deployer \
+  --network testnet
+
+# Save the WASM hash (64 hex characters)
+# Example: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+```
+
+If you don't have a token WASM, you can use the Stellar Asset Contract:
+```bash
+# Download the official Stellar token contract
+wget https://github.com/stellar/soroban-examples/raw/main/token/target/wasm32-unknown-unknown/release/soroban_token_contract.wasm
+
+# Install it
+stellar contract install \
+  --wasm soroban_token_contract.wasm \
+  --source deployer \
+  --network testnet
+```
+
+#### Step 5: Initialize the Factory
+
+```bash
+# Get your admin address (same as deployer for simplicity)
+ADMIN_ADDRESS=$(stellar keys address deployer)
 
 # Initialize the contract
 stellar contract invoke \
-  --id <contract-id> \
-  --source <your-secret-key> \
+  --id <FACTORY_CONTRACT_ID> \
+  --source deployer \
   --network testnet \
   -- \
   initialize \
-  --admin <admin-address> \
-  --treasury <treasury-address> \
-  --base_fee 70000000 \
-  --metadata_fee 30000000
+  --admin $ADMIN_ADDRESS \
+  --treasury $ADMIN_ADDRESS \
+  --fee_token <NATIVE_XLM_CONTRACT_ADDRESS> \
+  --base_fee 100000000 \
+  --metadata_fee 50000000
 ```
 
-### Frontend Deployment
+**Parameters explained:**
+- `admin`: Address that can update fees and pause the factory
+- `treasury`: Address that receives fees from token creation
+- `fee_token`: Contract address for the fee token (use native XLM contract: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`)
+- `base_fee`: Fee for creating a token (in stroops, 1 XLM = 10,000,000 stroops)
+- `metadata_fee`: Fee for setting token metadata
+
+#### Step 6: Configure Frontend
+
 ```bash
 cd frontend
-npm run build
-# Deploy the dist/ folder to your hosting service (Vercel, Netlify, etc.)
+
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your values
+nano .env
 ```
+
+Update these required variables:
+```env
+VITE_NETWORK=testnet
+VITE_FACTORY_CONTRACT_ID=<your-factory-contract-id>
+VITE_TOKEN_WASM_HASH=<your-token-wasm-hash>
+VITE_IPFS_API_KEY=<your-pinata-api-key>
+VITE_IPFS_API_SECRET=<your-pinata-api-secret>
+```
+
+**Getting Pinata credentials:**
+1. Sign up at [https://app.pinata.cloud](https://app.pinata.cloud)
+2. Go to API Keys → New Key
+3. Enable "pinFileToIPFS" permission
+4. Copy the API Key and API Secret
+
+#### Step 7: Test Locally
+
+```bash
+# Start the development server
+npm run dev
+
+# Open http://localhost:5173 in your browser
+```
+
+1. Connect your Freighter wallet (make sure it's on testnet)
+2. Try creating a test token
+3. Verify the transaction on [Stellar Expert](https://stellar.expert/explorer/testnet)
+
+#### Step 8: Deploy Frontend
+
+```bash
+# Build for production
+npm run build
+
+# Deploy the dist/ folder to your hosting service
+```
+
+**Deployment options:**
+- **Vercel**: See [docs/deployment-vercel.md](./docs/deployment-vercel.md)
+- **Netlify**: Drag and drop the `dist/` folder
+- **GitHub Pages**: Use `gh-pages` package
+- **Your own server**: Serve the `dist/` folder with nginx/apache
+
+### Mainnet Deployment
+
+⚠️ **Warning**: Mainnet deployment involves real money. Test thoroughly on testnet first!
+
+The process is identical to testnet, but:
+1. Use `--network mainnet` instead of `--network testnet`
+2. Fund your account with real XLM (buy from an exchange)
+3. Set `VITE_NETWORK=mainnet` in your `.env`
+4. Review all parameters carefully before deployment
+5. Consider using a hardware wallet for the admin key
+
+### Troubleshooting Deployment
+
+#### Error: "account not found"
+Your account doesn't exist on the network yet. Fund it with Friendbot (testnet) or send XLM from an exchange (mainnet).
+
+```bash
+# Testnet
+curl "https://friendbot.stellar.org?addr=$(stellar keys address deployer)"
+```
+
+#### Error: "insufficient balance"
+You don't have enough XLM to pay for the transaction.
+
+```bash
+# Check balance
+stellar account balance deployer --network testnet
+
+# Get more testnet XLM
+curl "https://friendbot.stellar.org?addr=$(stellar keys address deployer)"
+```
+
+#### Error: "contract already initialized"
+The contract has already been initialized. You can't initialize it again. If you need to change parameters, deploy a new contract.
+
+#### Error: "wasm not found"
+The WASM hash you provided doesn't exist on the network. Make sure you ran `stellar contract install` first and used the correct hash.
+
+#### Build fails with "target not found"
+Add the wasm32 target to Rust:
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+#### Frontend shows "Misconfiguration Screen"
+One or more required environment variables are missing. Check that your `.env` file has:
+- `VITE_FACTORY_CONTRACT_ID`
+- `VITE_TOKEN_WASM_HASH`
+- `VITE_IPFS_API_KEY`
+- `VITE_IPFS_API_SECRET`
+
+Restart the dev server after changing `.env` files.
 
 ## Project Structure
 
@@ -223,6 +441,246 @@ stellar-forge/
 │   └── setup-soroban.sh      # Installs Rust + Stellar CLI + configures testnet
 └── README.md
 ```
+
+## Architecture
+
+StellarForge consists of three main components that work together:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User's Browser                          │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                    React Frontend                         │ │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │ │
+│  │  │  UI Layer   │  │   Services   │  │   Wallet SDK    │ │ │
+│  │  │ Components  │→ │ stellar.ts   │→ │   Freighter     │ │ │
+│  │  │  Forms      │  │ ipfs.ts      │  │   Integration   │ │ │
+│  │  └─────────────┘  └──────────────┘  └─────────────────┘ │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+└──────────────────────────────┼──────────────────────────────────┘
+                               ↓
+              ┌────────────────┴────────────────┐
+              │                                 │
+              ↓                                 ↓
+┌─────────────────────────┐      ┌─────────────────────────┐
+│   Stellar Network       │      │    IPFS (Pinata)        │
+│                         │      │                         │
+│  ┌──────────────────┐   │      │  ┌──────────────────┐   │
+│  │ Factory Contract │   │      │  │ Token Metadata   │   │
+│  │  - create_token  │   │      │  │  - Images        │   │
+│  │  - mint_tokens   │   │      │  │  - Descriptions  │   │
+│  │  - burn          │   │      │  │  - JSON files    │   │
+│  │  - set_metadata  │   │      │  └──────────────────┘   │
+│  └────────┬─────────┘   │      └─────────────────────────┘
+│           │             │
+│           ↓             │
+│  ┌──────────────────┐   │
+│  │ Token Contracts  │   │
+│  │ (deployed by     │   │
+│  │  factory)        │   │
+│  │  - transfer      │   │
+│  │  - balance       │   │
+│  │  - approve       │   │
+│  └──────────────────┘   │
+└─────────────────────────┘
+```
+
+### Component Interactions
+
+1. **User → Frontend**: User interacts with React UI to create tokens, set metadata, etc.
+
+2. **Frontend → Freighter**: Frontend uses Freighter API to request transaction signatures
+
+3. **Frontend → Stellar Network**: Signed transactions are submitted to Stellar via Soroban RPC
+
+4. **Factory Contract → Token Contracts**: Factory deploys new token contracts using the token WASM hash
+
+5. **Frontend → IPFS**: Token metadata (images, descriptions) are uploaded to IPFS via Pinata
+
+6. **Frontend → Stellar Network**: Metadata URIs (ipfs://...) are stored on-chain via `set_metadata`
+
+### Data Flow Example: Creating a Token
+
+```
+1. User fills form → 2. Frontend validates → 3. Freighter signs tx
+                                                      ↓
+                                            4. Submit to Stellar
+                                                      ↓
+                                            5. Factory Contract
+                                               - Validates params
+                                               - Collects fee
+                                               - Deploys token
+                                                      ↓
+                                            6. New Token Contract
+                                               - Initialized
+                                               - Mints supply
+                                                      ↓
+                                            7. Event emitted
+                                                      ↓
+                                            8. Frontend updates UI
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. Freighter Wallet Not Detected
+
+**Symptoms**: "Wallet not installed" error or connection button doesn't work
+
+**Solutions**:
+- Install [Freighter wallet extension](https://www.freighter.app/)
+- Refresh the page after installing
+- Check that Freighter is enabled in your browser extensions
+- Try a different browser (Chrome, Firefox, Brave, Edge supported)
+
+#### 2. Wrong Network Selected
+
+**Symptoms**: Transactions fail with "account not found" or "contract not found"
+
+**Solutions**:
+- Check the network indicator in the top-right corner of the app
+- Click the network switcher to toggle between testnet and mainnet
+- In Freighter, ensure you're on the same network as the app
+- Verify `VITE_NETWORK` in your `.env` matches your deployment
+
+#### 3. Insufficient Balance / Fee Errors
+
+**Symptoms**: "insufficient balance" or "insufficient fee" errors
+
+**Solutions**:
+- **Testnet**: Get free XLM from Friendbot:
+  ```bash
+  curl "https://friendbot.stellar.org?addr=YOUR_ADDRESS"
+  ```
+- **Mainnet**: Buy XLM from an exchange and send to your wallet
+- Check your balance in Freighter wallet
+- Ensure you have at least 2-3 XLM for contract interactions
+- Fee errors may indicate the factory's fee requirements have increased
+
+#### 4. Transaction Timeout
+
+**Symptoms**: Transaction pending for a long time, then fails
+
+**Solutions**:
+- Check Stellar network status at [status.stellar.org](https://status.stellar.org)
+- Increase timeout in the code (default is 30 seconds)
+- Try submitting the transaction again
+- Check if Soroban RPC endpoint is responding:
+  ```bash
+  curl https://soroban-testnet.stellar.org/health
+  ```
+
+#### 5. IPFS Upload Fails
+
+**Symptoms**: "Failed to upload metadata" or IPFS errors
+
+**Solutions**:
+- Verify your Pinata API credentials in `.env`
+- Check Pinata dashboard for API key status
+- Ensure image file is under 10MB
+- Try a different image format (PNG, JPG, GIF supported)
+- Check Pinata service status at [status.pinata.cloud](https://status.pinata.cloud)
+
+#### 6. Contract Initialization Fails
+
+**Symptoms**: "AlreadyInitialized" error or initialization transaction fails
+
+**Solutions**:
+- Contract can only be initialized once
+- If you need different parameters, deploy a new contract
+- Check if contract is already initialized:
+  ```bash
+  stellar contract invoke \
+    --id <contract-id> \
+    --network testnet \
+    -- get_state
+  ```
+
+#### 7. Token Creation Fails
+
+**Symptoms**: "InvalidTokenParams" or creation transaction fails
+
+**Solutions**:
+- Ensure token name is 1-32 characters
+- Ensure token symbol is 1-12 characters
+- Decimals must be 0-18
+- Initial supply must be non-negative
+- Check that you have enough XLM to pay the creation fee
+- Verify the factory is not paused:
+  ```bash
+  stellar contract invoke \
+    --id <contract-id> \
+    --network testnet \
+    -- get_state
+  ```
+
+#### 8. Metadata Not Displaying
+
+**Symptoms**: Token created but image/description doesn't show
+
+**Solutions**:
+- Check that metadata was set (look for `metadata_set` event)
+- Verify IPFS URI is accessible:
+  ```bash
+  curl https://gateway.pinata.cloud/ipfs/<your-cid>
+  ```
+- Clear browser cache and reload
+- Check browser console for CORS or loading errors
+- Ensure metadata JSON follows the correct format:
+  ```json
+  {
+    "name": "Token Name",
+    "description": "Token description",
+    "image": "ipfs://..."
+  }
+  ```
+
+#### 9. Build Errors
+
+**Symptoms**: `cargo build` or `npm run build` fails
+
+**Solutions**:
+- **Rust build fails**:
+  ```bash
+  rustup update
+  rustup target add wasm32-unknown-unknown
+  cd contracts && cargo clean && cargo build
+  ```
+- **Frontend build fails**:
+  ```bash
+  cd frontend
+  rm -rf node_modules package-lock.json
+  npm install
+  npm run build
+  ```
+- Check that you're using compatible versions (Node 18+, Rust stable)
+
+#### 10. Events Not Loading
+
+**Symptoms**: Transaction history or token events don't display
+
+**Solutions**:
+- Check that Soroban RPC endpoint supports `getEvents`
+- Verify contract ID is correct in `.env`
+- Check browser console for API errors
+- Try refreshing the page
+- Ensure you're on the correct network (testnet/mainnet)
+
+### Getting More Help
+
+If you're still experiencing issues:
+
+1. **Check the logs**: Open browser DevTools (F12) and check the Console tab
+2. **Search existing issues**: [GitHub Issues](https://github.com/Ejirowebfi/Stellar-forge/issues)
+3. **Ask for help**: Create a new issue with:
+   - Description of the problem
+   - Steps to reproduce
+   - Error messages (from browser console and terminal)
+   - Your environment (OS, browser, Node version)
+4. **Join the community**: Stellar Discord or developer forums
 
 ## Security
 

@@ -1,0 +1,56 @@
+YOUR TERMINAL IS STUCK - YOU MUST START FRESH!
+==============================================
+
+STEP 1: CLOSE THIS WINDOW
+--------------------------
+Close this PowerShell window completely (X button or Alt+F4)
+
+STEP 2: OPEN NEW COMMAND PROMPT (NOT POWERSHELL)
+-------------------------------------------------
+Press Windows Key + R
+Type: cmd
+Press Enter
+
+STEP 3: GO TO YOUR PROJECT
+---------------------------
+cd C:\Users\TOSHIBA\Desktop\Stellar-forge
+
+STEP 4: CHECK YOUR BRANCH
+--------------------------
+git branch
+
+You should see: * feature/error-handling-clean
+
+STEP 5: FORK ON GITHUB (if not done)
+-------------------------------------
+Open browser: https://github.com/Ejirowebfi/Stellar-forge
+Click "Fork" button (top right)
+
+STEP 6: ADD YOUR FORK & PUSH
+-----------------------------
+Replace YOUR_USERNAME with your actual GitHub username:
+
+git remote add myfork https://github.com/YOUR_USERNAME/Stellar-forge.git
+git push -u myfork feature/error-handling-clean
+
+STEP 7: CREATE PR ON GITHUB
+----------------------------
+1. Go to: https://github.com/YOUR_USERNAME/Stellar-forge
+2. You'll see a yellow banner "feature-error-handling-clean had recent pushes"
+3. Click "Compare & pull request"
+4. Click "Create pull request"
+
+DONE!
+
+==============================================
+WHAT'S WRONG NOW?
+==============================================
+Your PowerShell has a stuck "gh auth login" process running.
+Every command you type gets added to that prompt instead of running.
+You CANNOT fix this without closing the window.
+
+TELL ME:
+--------
+1. What is your GitHub username?
+2. Have you forked the repo yet?
+3. What happens when you try step 6 above?

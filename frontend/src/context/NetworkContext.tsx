@@ -1,19 +1,10 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useCallback, ReactNode } from 'react'
 import { STELLAR_CONFIG } from '../config/stellar'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 export type Network = 'testnet' | 'mainnet'
 
 const STORAGE_KEY = 'stellarforge_network'
-
-function getInitialNetwork(): Network {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'mainnet' || stored === 'testnet') return stored
-  } catch {
-    /* ignore */
-  }
-  return (STELLAR_CONFIG.network as Network) ?? 'testnet'
-}
 
 interface NetworkContextValue {
   network: Network
@@ -21,21 +12,23 @@ interface NetworkContextValue {
   rpcUrl: string
   horizonUrl: string
   networkPassphrase: string
+  mismatch: NetworkMismatchState
 }
 
 const NetworkContext = createContext<NetworkContextValue | null>(null)
 
 export function NetworkProvider({ children }: { children: ReactNode }) {
-  const [network, setNetwork] = useState<Network>(getInitialNetwork)
+  const [network, setNetwork] = useLocalStorage<Network>(
+    STORAGE_KEY,
+    (STELLAR_CONFIG.network as Network) ?? 'testnet',
+  )
 
-  const switchNetwork = useCallback((n: Network) => {
-    setNetwork(n)
-    try {
-      localStorage.setItem(STORAGE_KEY, n)
-    } catch {
-      /* ignore */
-    }
-  }, [])
+  const switchNetwork = useCallback(
+    (n: Network) => {
+      setNetwork(n)
+    },
+    [setNetwork],
+  )
 
   const cfg = STELLAR_CONFIG[network]
 

@@ -1,17 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { mockFreighter } from './helpers/wallet-mock';
 
 const TEST_ADDRESS = 'GCV6L3B2R6G2H5J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4J4';
 const TEST_TOKEN = process.env.E2E_TOKEN_ADDRESS ?? 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM';
 
 test.describe('Burn Flow', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     await mockFreighter(page, TEST_ADDRESS);
     await page.goto('/');
     await page.getByRole('button', { name: /Connect Wallet/i }).click();
   });
 
-  test('should burn tokens from an account', async ({ page }) => {
+  test('should burn tokens from an account', async ({ page }: { page: Page }) => {
     await page.goto('/burn');
 
     await page.getByLabel(/Token Address/i).fill(TEST_TOKEN);
@@ -22,7 +22,7 @@ test.describe('Burn Flow', () => {
     await expect(page.getByText(/Burn successful|burned successfully/i)).toBeVisible({ timeout: 15000 });
   });
 
-  test('should show error for zero burn amount', async ({ page }) => {
+  test('should show error for zero burn amount', async ({ page }: { page: Page }) => {
     await page.goto('/burn');
 
     await page.getByLabel(/Token Address/i).fill(TEST_TOKEN);

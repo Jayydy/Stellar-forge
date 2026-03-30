@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react'
-import { stellarService } from '../services/stellar'
+import React from 'react'
+import { useTransaction } from '../hooks/useTransaction'
+import { useNetwork } from '../context/NetworkContext'
+import { stellarExplorerUrl } from '../utils/formatting'
 import { Spinner } from './UI/Spinner'
+import { CopyButton } from './CopyButton'
 
 export interface TransactionStatusProps {
   txHash: string
@@ -8,30 +11,13 @@ export interface TransactionStatusProps {
   onError?: (error: string) => void
 }
 
-type TxState = 'pending' | 'success' | 'error'
-
 export const TransactionStatus: React.FC<TransactionStatusProps> = ({
   txHash,
   onSuccess,
   onError,
 }) => {
-  const [status, setStatus] = useState<TxState>('pending')
-  const [errorMessage, setErrorMessage] = useState<string>('')
-
-  useEffect(() => {
-    const POLL_INTERVAL_MS = 3000
-    const TIMEOUT_MS = 60000
-    const startTime = Date.now()
-    const pollStatus = async () => {
-      // If we've already timed out, don't execute a new fetch
-      if (Date.now() - startTime >= TIMEOUT_MS) {
-        setStatus('error')
-        const timeoutError = 'Transaction polling timed out'
-        setErrorMessage(timeoutError)
-        clearInterval(intervalId)
-        if (onError) onError(timeoutError)
-        return
-      }
+  const { status, error } = useTransaction(txHash)
+  const { network } = useNetwork()
 
       try {
         const res = (await stellarService.getTransaction(txHash)) as {
@@ -60,13 +46,10 @@ export const TransactionStatus: React.FC<TransactionStatusProps> = ({
       }
     }
 
-    const intervalId = setInterval(pollStatus, POLL_INTERVAL_MS)
-    pollStatus()
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [txHash, onSuccess, onError])
+  React.useEffect(() => {
+    if (status === 'success') onSuccess?.()
+    if (status === 'failed') onError?.(error ?? 'Transaction failed')
+  }, [status, error, onSuccess, onError])
 
   return (
     <div className="flex flex-col items-center justify-center p-6 space-y-4 bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-sm mx-auto">
@@ -96,19 +79,22 @@ export const TransactionStatus: React.FC<TransactionStatusProps> = ({
             </svg>
           </div>
           <span className="font-bold text-lg text-gray-800">Transaction Successful</span>
-          <a
-            href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-mono text-blue-500 hover:text-blue-700 underline truncate max-w-full px-4"
-            title={txHash}
-          >
-            {txHash.slice(0, 8)}...{txHash.slice(-8)}
-          </a>
+          <div className="inline-flex items-center gap-2">
+            <a
+              href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-mono text-blue-500 hover:text-blue-700 underline truncate max-w-xs"
+              title={txHash}
+            >
+              {txHash.slice(0, 8)}...{txHash.slice(-8)}
+            </a>
+            <CopyButton value={txHash} ariaLabel="Copy transaction hash" />
+          </div>
         </div>
       )}
 
-      {status === 'error' && (
+      {status === 'failed' && (
         <div className="flex flex-col items-center space-y-3 text-red-600">
           <div className="flex items-center space-x-2 bg-red-50 p-2 rounded-full">
             <svg
@@ -127,7 +113,15 @@ export const TransactionStatus: React.FC<TransactionStatusProps> = ({
             </svg>
           </div>
           <span className="font-bold text-lg text-gray-800">Transaction Failed</span>
-          {errorMessage && <p className="text-sm text-red-500 text-center px-2">{errorMessage}</p>}
+          {error && <p className="text-sm text-red-500 text-center px-2">{error}</p>}
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-500 hover:text-blue-700 underline"
+          >
+            View on Stellar Expert
+          </a>
         </div>
       )}
     </div>

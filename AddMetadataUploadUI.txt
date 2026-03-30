@@ -1,0 +1,36 @@
+oken Metadata Upload
+Configure immutable asset properties for decentralized indexing. Metadata conforms to ERC-721/1155 institutional standards.
+
+Upload Media Asset
+Drag and drop your asset here, or browse files
+JPEG, PNG, GIF  MAX 5MB
+
+File size exceeds the 5MB institutional limit. Please optimize.
+
+Token Details
+Token Name
+e.g. Sovereign Yield Tier 1
+
+External URL
+https://sovereign.quant/assets/0x1...
+
+Token Description (245 / 500)
+Describe the quantitative attributes and rights associated with this token...
+
+[Reset Fields]
+
+Upload Status
+IPFS Pinning (74%)
+Propagating to global nodes...
+
+[FINALIZE METADATA]
+
+Asset Stored Successfully
+Content addressed via CID v1
+IPFS GATEWAY URI
+ipfs://QmXoyp...t7u6y [Copy Icon]
+
+Institutional Note
+Ensure all attributes are final. Once metadata is pinned to IPFS and linked to the smart contract, it becomes a permanent record of the asset's provenance.
+
+https://www.figma.com/design/OfWcFy6BwbzZ9Vzcm8ftrn/Add-Metadata-Upload-UI?m=auto&t=WbiPPJVKNMRSXJz3-6

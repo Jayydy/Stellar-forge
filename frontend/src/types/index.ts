@@ -75,6 +75,7 @@ export interface AppError {
   message: string
 }
 
+export type SortOrder = 'newest' | 'oldest' | 'alphabetical'
 export type ContractEventType =
   | 'token_created'
   | 'tokens_minted'

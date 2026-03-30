@@ -43,6 +43,15 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <title>StellarForge - Stellar Token Deployer</title>
+    <!-- Plausible Analytics — loaded only when VITE_PLAUSIBLE_DOMAIN is set -->
+    <!-- defer + data-api keeps it privacy-respecting and non-blocking -->
+    <script
+      defer
+      data-domain="%VITE_PLAUSIBLE_DOMAIN%"
+      data-api="https://plausible.io/api/event"
+      src="https://plausible.io/js/script.manual.js"
+    ></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
   </head>
   <body>
     <div id="root"></div>

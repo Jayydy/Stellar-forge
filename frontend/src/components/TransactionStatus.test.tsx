@@ -1,18 +1,23 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, test, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { TransactionStatus } from './TransactionStatus'
 import { stellarService } from '../services/stellar'
 
 vi.mock('../services/stellar', () => ({
-  stellarService: {
-    getTransaction: vi.fn(),
-  },
+  stellarService: { getTransaction: vi.fn() },
 }))
+
+vi.mock('../context/NetworkContext', () => ({
+  useNetwork: vi.fn(() => ({ network: 'testnet' })),
+}))
+
+import { useNetwork } from '../context/NetworkContext'
 
 describe('TransactionStatus Component', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.clearAllMocks()
+    ;(useNetwork as Mock).mockReturnValue({ network: 'testnet' })
   })
 
   afterEach(() => {
@@ -37,13 +42,13 @@ describe('TransactionStatus Component', () => {
       await Promise.resolve()
     })
 
-    await act(async () => {
-      vi.advanceTimersByTime(3000)
+    await vi.waitFor(() => {
+      expect(screen.getByText('Transaction Successful')).toBeInTheDocument()
     })
 
-    expect(stellarService.getTransaction).toHaveBeenCalledTimes(2)
+    const link = screen.getByRole('link', { name: /view on stellar expert/i })
+    expect(link).toHaveAttribute('href', 'https://stellar.expert/explorer/testnet/tx/test-hash')
     expect(onSuccess).toHaveBeenCalled()
-    expect(screen.getByText('Transaction Successful')).toBeInTheDocument()
   })
 
   test('polls and handles failed transaction', async () => {
@@ -59,9 +64,10 @@ describe('TransactionStatus Component', () => {
       await Promise.resolve()
     })
 
-    expect(onError).toHaveBeenCalledWith('Insufficient funds')
-    expect(screen.getByText('Transaction Failed')).toBeInTheDocument()
     expect(screen.getByText('Insufficient funds')).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /view on stellar expert/i })
+    expect(link).toHaveAttribute('href', 'https://stellar.expert/explorer/testnet/tx/test-hash')
+    expect(onError).toHaveBeenCalledWith('Insufficient funds')
   })
 
   test('handles 60s timeout properly', async () => {
@@ -74,8 +80,24 @@ describe('TransactionStatus Component', () => {
       vi.advanceTimersByTime(60000)
     })
 
-    expect(onError).toHaveBeenCalledWith('Transaction polling timed out')
-    expect(screen.getByText('Transaction Failed')).toBeInTheDocument()
-    expect(screen.getByText('Transaction polling timed out')).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /view on stellar expert/i })
+    expect(link).toHaveAttribute('href', 'https://stellar.expert/explorer/public/tx/test-hash')
+  })
+
+  test('shows timeout error after 60 seconds', async () => {
+    const onError = vi.fn()
+    ;(stellarService.getTransaction as Mock).mockResolvedValue({ status: 'pending' })
+
+    render(<TransactionStatus txHash="test-hash" onError={onError} />)
+
+    await vi.waitFor(
+      () => {
+        vi.advanceTimersByTime(60000)
+        expect(screen.getByText('Transaction Failed')).toBeInTheDocument()
+      },
+      { timeout: 5000 },
+    )
+
+    expect(onError).toHaveBeenCalledWith('Timeout')
   })
 })

@@ -122,4 +122,9 @@ declare global {
   interface Window {
     freighter?: unknown
   }
+
+  interface WindowEventMap {
+    'freighter:accountChanged': CustomEvent
+    'freighter:networkChanged': CustomEvent
+  }
 }

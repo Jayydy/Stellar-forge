@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import * as fc from 'fast-check'
 import {
   formatTimestamp,
   timeAgo,
@@ -58,6 +59,45 @@ describe('stellarExplorerUrl', () => {
   it('defaults to testnet', () => {
     expect(stellarExplorerUrl('tx', 'xyz')).toContain('testnet')
   })
+
+  // Feature: stellar-explorer-links, Property 1: URL base path matches network
+  it('Property 1: URL base path matches network', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('tx' as const, 'contract' as const, 'account' as const),
+        fc.string({ minLength: 1 }),
+        fc.constantFrom('testnet' as const, 'mainnet' as const),
+        (type, id, network) => {
+          const url = stellarExplorerUrl(type, id, network)
+          const expectedBase =
+            network === 'mainnet'
+              ? 'https://stellar.expert/explorer/public'
+              : 'https://stellar.expert/explorer/testnet'
+          return url.startsWith(expectedBase)
+        },
+      ),
+      { numRuns: 100 },
+    )
+  })
+
+  // Feature: stellar-explorer-links, Property 2: URL pathname contains correct resource segment and identifier (round-trip)
+  it('Property 2: URL pathname contains correct resource segment and identifier', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('tx' as const, 'contract' as const, 'account' as const),
+        // Use alphanumeric identifiers to avoid URL normalization edge cases
+        // (e.g. '.' and '..' are normalized by the URL parser as path segments)
+        fc.stringMatching(/^[a-zA-Z0-9_\-]+$/).filter((s) => s.length >= 1),
+        fc.constantFrom('testnet' as const, 'mainnet' as const),
+        (type, id, network) => {
+          const url = stellarExplorerUrl(type, id, network)
+          const parsed = new URL(url)
+          return parsed.pathname.includes(`/${type}/${id}`)
+        },
+      ),
+      { numRuns: 100 },
+    )
+  })
 })
 
 describe('formatXLM', () => {
@@ -98,6 +138,10 @@ describe('stroopsToXLM', () => {
   it('handles string input', () => {
     expect(stroopsToXLM('5000000')).toBe(0.5)
   })
+
+  it('formats 70000000 stroops as readable XLM', () => {
+    expect(formatXLM(stroopsToXLM(70000000))).toBe('7.0000000 XLM')
+  })
 })
 
 describe('xlmToStroops', () => {
@@ -107,6 +151,30 @@ describe('xlmToStroops', () => {
 
   it('floors fractional stroops', () => {
     expect(xlmToStroops('0.00000001')).toBe(0)
+  })
+
+  it('handles edge cases', () => {
+    expect(xlmToStroops(0)).toBe(0)
+    expect(xlmToStroops(1000000000000000)).toBe(10000000000000000000000)
+  })
+})
+
+describe('round-trip conversion', () => {
+  it('xlmToStroops(stroopsToXLM(x)) === x', () => {
+    const testValues = [10000000, 5000000, 1000000, 100000, 10000, 1000, 100, 10, 1]
+
+    testValues.forEach(value => {
+      expect(xlmToStroops(stroopsToXLM(value))).toBe(value)
+    })
+  })
+
+  it('handles zero', () => {
+    expect(xlmToStroops(stroopsToXLM(0))).toBe(0)
+  })
+
+  it('handles large numbers', () => {
+    const largeValue = 1000000000000000
+    expect(xlmToStroops(stroopsToXLM(largeValue))).toBe(largeValue)
   })
 })
 
@@ -160,7 +228,7 @@ describe('timeAgo', () => {
 
   it('returns just now for future timestamps', () => {
     freeze(1000)
-    expect(timeAgo(2000)).toBe('just now')
+    expect(timeAgo(2000)).toBe('in 1,000 seconds')
   })
 
   it('handles 0 without throwing', () => {

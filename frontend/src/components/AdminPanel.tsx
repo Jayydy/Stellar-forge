@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Input, Button, ConfirmModal } from './UI'
 import { useWalletContext } from '../context/WalletContext'
 import { useStellarContext } from '../context/StellarContext'
 import { useToast } from '../context/ToastContext'
 import { useFactoryState } from '../hooks/useFactoryState'
+import { useTransaction } from '../hooks/useTransaction'
 
 // Stroops → display XLM (7 decimals)
 function stroopsToDisplay(stroops: string): string {
@@ -30,7 +31,24 @@ export const AdminPanel: React.FC = () => {
   const [metadataFee, setMetadataFee] = useState('')
   const [errors, setErrors] = useState<{ baseFee?: string; metadataFee?: string }>({})
   const [showConfirm, setShowConfirm] = useState(false)
-  const [isPending, setIsPending] = useState(false)
+
+  const feesRef = useRef({ baseFee: '', metadataFee: '' })
+
+  const feeBuilder = useCallback(
+    () =>
+      stellarService.updateFees({
+        baseFee: feesRef.current.baseFee,
+        metadataFee: feesRef.current.metadataFee,
+      }),
+    [stellarService],
+  )
+
+  const { execute, status: txStatus } = useTransaction(feeBuilder)
+  const isPending =
+    txStatus === 'simulating' ||
+    txStatus === 'signing' ||
+    txStatus === 'submitting' ||
+    txStatus === 'polling'
 
   // Pre-populate form once factory state loads
   useEffect(() => {
@@ -86,18 +104,16 @@ export const AdminPanel: React.FC = () => {
 
   async function handleConfirm() {
     setShowConfirm(false)
-    setIsPending(true)
+    feesRef.current = {
+      baseFee: displayToStroops(baseFee),
+      metadataFee: displayToStroops(metadataFee),
+    }
     try {
-      await stellarService.updateFees({
-        baseFee: displayToStroops(baseFee),
-        metadataFee: displayToStroops(metadataFee),
-      })
+      await execute()
       addToast('Fees updated successfully.', 'success')
       refetch()
     } catch (err) {
       addToast(err instanceof Error ? err.message : 'Transaction failed.', 'error')
-    } finally {
-      setIsPending(false)
     }
   }
 

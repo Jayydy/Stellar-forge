@@ -1,16 +1,30 @@
-import { useState, useEffect } from 'react'
-import { Input, Button, ConfirmModal } from './UI'
-import { useDebounce } from '../hooks/useDebounce'
+import { useEffect, useCallback, useRef } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { Input, Button, ConfirmModal, InsufficientBalanceWarning, Select } from './UI'
+import { useTransaction } from '../hooks/useTransaction'
 import { useTos } from '../context/TosContext'
 import { useStellarContext } from '../context/StellarContext'
 import { useWalletContext } from '../context/WalletContext'
 import { useToast } from '../context/ToastContext'
-import { isValidStellarAddress } from '../utils/validation'
-import type { TokenInfo } from '../types'
+import { useNetwork } from '../context/NetworkContext'
+import { useBalanceCheck } from '../hooks/useBalanceCheck'
+import { useTokenDashboard } from '../hooks/useTokenDashboard'
+import { isValidStellarAddress, isValidContractAddress } from '../utils/validation'
+import { stellarExplorerUrl } from '../utils/formatting'
+import { useDebounce } from '../hooks/useDebounce'
+import { useState } from 'react'
 
-const BASE_FEE_STROOPS = '100000' // 0.01 XLM
+const BASE_FEE_STROOPS = '100000'
 const ESTIMATED_FEE_DISPLAY = '0.01 XLM'
-const ADDRESS_DEBOUNCE_DELAY = 500
+const ESTIMATED_FEE_XLM = 0.01
+const MANUAL_VALUE = '__manual__'
+
+interface MintFormData {
+  tokenSelect: string   // dropdown value — either a contract address or MANUAL_VALUE
+  tokenManual: string   // shown only when tokenSelect === MANUAL_VALUE
+  recipient: string
+  amount: string
+}
 
 interface MintFormProps {
   tokenAddress?: string
@@ -23,149 +37,236 @@ export const MintForm: React.FC<MintFormProps> = ({
 }) => {
   const { stellarService } = useStellarContext()
   const { wallet } = useWalletContext()
+  const { network } = useNetwork()
   const { addToast } = useToast()
   const { requireTos } = useTos()
+  const { hasSufficientBalance, shortfall, isTestnet } = useBalanceCheck(ESTIMATED_FEE_XLM)
+  const { rows: myTokens } = useTokenDashboard()
 
-  const [tokenAddress, setTokenAddress] = useState(initialAddress)
-  const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('')
-  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null)
   const [pending, setPending] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [recipientHasAccount, setRecipientHasAccount] = useState<boolean | null>(null)
-  const [recipientValidationError, setRecipientValidationError] = useState<string | null>(null)
   const [isCheckingRecipient, setIsCheckingRecipient] = useState(false)
-
-  const debouncedAddress = useDebounce(tokenAddress, ADDRESS_DEBOUNCE_DELAY)
-  const debouncedRecipient = useDebounce(recipient, ADDRESS_DEBOUNCE_DELAY)
+  const [txHash, setTxHash] = useState<string | null>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    if (!debouncedAddress) { setTokenInfo(null); return }
-    stellarService
-      .getTokenInfo(debouncedAddress)
-      .then(setTokenInfo)
-      .catch(() => setTokenInfo(null))
-  }, [debouncedAddress, stellarService])
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<MintFormData>({
+    defaultValues: {
+      tokenSelect: initialAddress || (myTokens.length > 0 ? myTokens[0].address : MANUAL_VALUE),
+      tokenManual: initialAddress,
+      recipient: '',
+      amount: '',
+    },
+  })
+
+  const tokenSelect = watch('tokenSelect')
+  const tokenManual = watch('tokenManual')
+  const recipient = watch('recipient')
+
+  // Resolved token address: dropdown selection or manual input
+  const resolvedTokenAddress = tokenSelect === MANUAL_VALUE ? tokenManual : tokenSelect
+
+  // Token info from dropdown selection
+  const selectedToken = myTokens.find((t) => t.address === tokenSelect)
+
+  // Debounced recipient for account-existence check
+  const debouncedRecipient = useDebounce(recipient, 500)
 
   useEffect(() => {
     const trimmed = debouncedRecipient.trim()
-    if (!trimmed) {
+    if (!trimmed || !isValidStellarAddress(trimmed)) {
       setRecipientHasAccount(null)
-      setRecipientValidationError(null)
-      setIsCheckingRecipient(false)
-      return
-    }
-    if (!isValidStellarAddress(trimmed)) {
-      setRecipientHasAccount(null)
-      setRecipientValidationError('Enter a valid Stellar account address.')
       setIsCheckingRecipient(false)
       return
     }
     let cancelled = false
-    setRecipientValidationError(null)
     setIsCheckingRecipient(true)
     stellarService
       .accountExists(trimmed)
-      .then((exists) => { if (!cancelled) setRecipientHasAccount(exists) })
-      .catch(() => {
-        if (!cancelled) {
-          setRecipientHasAccount(null)
-          setRecipientValidationError('Could not verify whether this address is funded right now.')
-        }
-      })
-      .finally(() => { if (!cancelled) setIsCheckingRecipient(false) })
+      .then((exists) => { if (!cancelled && mountedRef.current) setRecipientHasAccount(exists) })
+      .catch(() => { if (!cancelled && mountedRef.current) setRecipientHasAccount(null) })
+      .finally(() => { if (!cancelled && mountedRef.current) setIsCheckingRecipient(false) })
     return () => { cancelled = true }
   }, [debouncedRecipient, stellarService])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const mintBuilder = useCallback(
+    () =>
+      stellarService.mintTokens({
+        tokenAddress: resolvedTokenAddress,
+        to: recipient.trim(),
+        amount: watch('amount'),
+        feePayment: BASE_FEE_STROOPS,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stellarService, resolvedTokenAddress, recipient],
+  )
+
+  const { execute: executeMint, status: txStatus } = useTransaction(mintBuilder)
+  const isSubmitting =
+    txStatus === 'simulating' || txStatus === 'signing' || txStatus === 'submitting' || txStatus === 'polling'
+
+  const onValid = () => {
     if (!wallet.isConnected) { addToast('Connect your wallet first', 'error'); return }
     requireTos(() => setPending(true))
   }
 
   const handleConfirm = async () => {
     setPending(false)
-    setIsSubmitting(true)
     try {
-      await stellarService.mintTokens({
-        tokenAddress,
-        to: recipient,
-        amount,
-        feePayment: BASE_FEE_STROOPS,
-      })
-      addToast('Tokens minted successfully', 'success')
-      setAmount('')
-      setRecipient('')
-      setRecipientHasAccount(null)
-      onSuccess?.()
+      const hash = await executeMint()
+      if (mountedRef.current) {
+        setTxHash(hash)
+        addToast('Tokens minted successfully', 'success')
+        onSuccess?.()
+      }
     } catch (err) {
-      addToast(err instanceof Error ? err.message : 'Mint failed', 'error')
-    } finally {
-      setIsSubmitting(false)
+      if (mountedRef.current) {
+        addToast(err instanceof Error ? err.message : 'Mint failed', 'error')
+      }
     }
   }
 
+  const tokenOptions = [
+    ...myTokens.map((t) => ({ value: t.address, label: `${t.name} (${t.symbol})` })),
+    { value: MANUAL_VALUE, label: 'Manual input…' },
+  ]
+
+  const formAmount = watch('amount')
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Token Address"
-          value={tokenAddress}
-          onChange={(e) => setTokenAddress(e.target.value)}
-          placeholder="C..."
-          required
-          disabled={!!initialAddress}
+      <form onSubmit={handleSubmit(onValid)} className="space-y-4" noValidate>
+        {/* Token selector */}
+        <Controller
+          name="tokenSelect"
+          control={control}
+          rules={{ required: 'Select a token' }}
+          render={({ field }) => (
+            <Select
+              label="Token"
+              options={tokenOptions.length > 1 ? tokenOptions : [{ value: MANUAL_VALUE, label: 'Manual input…' }]}
+              placeholder={myTokens.length === 0 ? 'No tokens found — use manual input' : undefined}
+              error={errors.tokenSelect?.message}
+              required
+              disabled={!!initialAddress}
+              {...field}
+              value={field.value}
+              onChange={(e) => field.onChange(e.target.value)}
+            />
+          )}
         />
-        {tokenInfo && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Token: {tokenInfo.name} ({tokenInfo.symbol})
+
+        {/* Manual token address input */}
+        {tokenSelect === MANUAL_VALUE && (
+          <Input
+            label="Token Address"
+            placeholder="C..."
+            required
+            disabled={!!initialAddress}
+            error={errors.tokenManual?.message}
+            {...register('tokenManual', {
+              required: 'Token address is required',
+              validate: (v) => isValidContractAddress(v.trim()) || 'Enter a valid Soroban contract address',
+            })}
+          />
+        )}
+
+        {/* Token info hint */}
+        {selectedToken && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Decimals: {selectedToken.decimals} · Creator: {selectedToken.creator.slice(0, 8)}…
           </p>
         )}
-        <Input
-          label="Recipient Address"
-          value={recipient}
-          onChange={(e) => {
-            setRecipient(e.target.value)
-            setRecipientHasAccount(null)
-            setRecipientValidationError(null)
-            setIsCheckingRecipient(false)
-          }}
-          placeholder="G..."
-          {...(recipientValidationError ? { error: recipientValidationError } : {})}
-          required
-        />
-        {isCheckingRecipient && !recipientValidationError && (
-          <p className="text-sm text-gray-500 dark:text-gray-400" aria-live="polite">
-            Checking whether the recipient account is funded...
-          </p>
-        )}
-        {recipientHasAccount === false && !recipientValidationError && (
-          <p className="text-sm text-amber-600 dark:text-amber-400" role="status" aria-live="polite">
-            This address does not have a Stellar account yet. It may need to be funded first.
-          </p>
-        )}
+
+        {/* Recipient */}
+        <div>
+          <Input
+            label="Recipient Address"
+            placeholder="G..."
+            required
+            error={errors.recipient?.message}
+            {...register('recipient', {
+              required: 'Recipient address is required',
+              validate: (v) => isValidStellarAddress(v.trim()) || 'Enter a valid Stellar account address',
+            })}
+            onChange={(e) => {
+              register('recipient').onChange(e)
+              setRecipientHasAccount(null)
+              setIsCheckingRecipient(false)
+            }}
+          />
+          {isCheckingRecipient && (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
+              Checking whether the recipient account is funded…
+            </p>
+          )}
+          {recipientHasAccount === false && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400" role="status" aria-live="polite">
+              This address does not have a Stellar account yet. It may need to be funded first.
+            </p>
+          )}
+        </div>
+
+        {/* Amount */}
         <Input
           label="Amount"
           type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
           placeholder="0"
-          min="1"
           required
+          error={errors.amount?.message}
+          {...register('amount', {
+            required: 'Amount is required',
+            validate: (v) => parseFloat(v) > 0 || 'Amount must be greater than 0',
+          })}
         />
+
+        {/* Fee display */}
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Estimated fee: {ESTIMATED_FEE_DISPLAY}
+          Estimated fee: <span className="font-medium">{ESTIMATED_FEE_DISPLAY}</span>
         </p>
+
         <Button
           type="submit"
           variant="primary"
           loading={isSubmitting}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !hasSufficientBalance}
           className="w-full sm:w-auto"
         >
-          Mint Tokens
+          {isSubmitting ? 'Processing Transaction…' : 'Mint Tokens'}
         </Button>
+
+        {!hasSufficientBalance && (
+          <InsufficientBalanceWarning shortfall={shortfall} isTestnet={isTestnet} />
+        )}
       </form>
+
+      {/* Success feedback with explorer link */}
+      {txHash && (
+        <div
+          role="status"
+          className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-sm text-green-800 dark:text-green-300 flex flex-col gap-1"
+        >
+          <span className="font-medium">✓ Tokens minted successfully</span>
+          <a
+            href={stellarExplorerUrl('tx', txHash, network)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-green-700 dark:text-green-400 text-xs"
+          >
+            View on Stellar Explorer →
+          </a>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={pending}
@@ -174,10 +275,12 @@ export const MintForm: React.FC<MintFormProps> = ({
         details={[
           {
             label: 'Token',
-            value: tokenInfo ? `${tokenInfo.name} (${tokenInfo.symbol})` : tokenAddress,
+            value: selectedToken
+              ? `${selectedToken.name} (${selectedToken.symbol})`
+              : resolvedTokenAddress,
           },
           { label: 'Recipient', value: recipient },
-          { label: 'Amount', value: amount },
+          { label: 'Amount', value: formAmount },
           { label: 'Estimated Fee', value: ESTIMATED_FEE_DISPLAY },
         ]}
         onConfirm={handleConfirm}
