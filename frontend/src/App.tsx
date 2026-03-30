@@ -20,7 +20,7 @@ import { Home } from './components/Home'
 import { CreateToken } from './components/CreateToken'
 import { MintForm } from './components/MintForm'
 import { BurnForm } from './components/BurnForm'
-import { Dashboard } from './components/Dashboard'
+import { TokenDashboard } from './components/TokenDashboard'
 import { TokenDetail } from './components/TokenDetail'
 import { TokenExplorer } from './components/TokenExplorer'
 import { FAQ } from './components/FAQ'
@@ -252,7 +252,7 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <ErrorBoundary>
-                        <Dashboard />
+                        <TokenDashboard />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
