@@ -15,19 +15,16 @@ export const useMainnetConfirmation = (): UseMainnetConfirmationReturn => {
   const [tokenParams, setTokenParams] = useState<TokenDeployParams | null>(null)
   const [onConfirmCallback, setOnConfirmCallback] = useState<(() => void) | null>(null)
 
-  const requestDeployment = useCallback(
-    (params: TokenDeployParams, onConfirm: () => void) => {
-      if (isMainnet()) {
-        setTokenParams(params)
-        setOnConfirmCallback(() => onConfirm)
-        setShowModal(true)
-      } else {
-        // On testnet, skip the confirmation modal
-        onConfirm()
-      }
-    },
-    []
-  )
+  const requestDeployment = useCallback((params: TokenDeployParams, onConfirm: () => void) => {
+    if (isMainnet()) {
+      setTokenParams(params)
+      setOnConfirmCallback(() => onConfirm)
+      setShowModal(true)
+    } else {
+      // On testnet, skip the confirmation modal
+      onConfirm()
+    }
+  }, [])
 
   const closeModal = useCallback(() => {
     setShowModal(false)

@@ -8,6 +8,8 @@ vi.mock('../services/wallet', () => ({
     connect: vi.fn(),
     disconnect: vi.fn(),
     isInstalled: vi.fn().mockReturnValue(true),
+    checkExistingConnection: vi.fn().mockResolvedValue(null),
+    getBalance: vi.fn().mockResolvedValue('100.0000000'),
   },
 }))
 
@@ -20,8 +22,12 @@ function WalletConsumer({ id = 'consumer' }: { id?: string }) {
       <span data-testid={`${id}-connected`}>{String(wallet.isConnected)}</span>
       <span data-testid={`${id}-connecting`}>{String(isConnecting)}</span>
       <span data-testid={`${id}-error`}>{error ?? 'null'}</span>
-      <button data-testid={`${id}-connect`} onClick={connect}>Connect</button>
-      <button data-testid={`${id}-disconnect`} onClick={disconnect}>Disconnect</button>
+      <button data-testid={`${id}-connect`} onClick={connect}>
+        Connect
+      </button>
+      <button data-testid={`${id}-disconnect`} onClick={disconnect}>
+        Disconnect
+      </button>
     </div>
   )
 }
@@ -35,7 +41,7 @@ describe('WalletProvider', () => {
     render(
       <WalletProvider>
         <WalletConsumer />
-      </WalletProvider>
+      </WalletProvider>,
     )
     expect(screen.getByTestId('consumer-address').textContent).toBe('null')
     expect(screen.getByTestId('consumer-connected').textContent).toBe('false')
@@ -49,7 +55,7 @@ describe('WalletProvider', () => {
     render(
       <WalletProvider>
         <WalletConsumer />
-      </WalletProvider>
+      </WalletProvider>,
     )
 
     await act(async () => {
@@ -66,7 +72,7 @@ describe('WalletProvider', () => {
     render(
       <WalletProvider>
         <WalletConsumer />
-      </WalletProvider>
+      </WalletProvider>,
     )
 
     await act(async () => {
@@ -83,7 +89,7 @@ describe('WalletProvider', () => {
     render(
       <WalletProvider>
         <WalletConsumer />
-      </WalletProvider>
+      </WalletProvider>,
     )
 
     await act(async () => {
@@ -105,7 +111,7 @@ describe('WalletProvider', () => {
       <WalletProvider>
         <WalletConsumer id="a" />
         <WalletConsumer id="b" />
-      </WalletProvider>
+      </WalletProvider>,
     )
 
     await act(async () => {
@@ -126,7 +132,7 @@ describe('useWalletContext outside provider', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => render(<WalletConsumer />)).toThrow(
-      'useWalletContext must be used within a WalletProvider'
+      'useWalletContext must be used within a WalletProvider',
     )
 
     spy.mockRestore()

@@ -5,6 +5,9 @@ export interface TokenDeployParams {
   symbol: string
   decimals: number
   initialSupply: string
+  salt: string
+  tokenWasmHash: string
+  feePayment: string
   metadata?: {
     image: File
     description: string
@@ -72,12 +75,11 @@ export interface AppError {
   message: string
 }
 
+export type SortOrder = 'newest' | 'oldest' | 'alphabetical'
 export type ContractEventType =
   | 'token_created'
   | 'tokens_minted'
   | 'tokens_burned'
-  | 'metadata_set'
-  | 'fees_updated'
   | 'metadata_set'
   | 'fees_updated'
 
@@ -93,13 +95,4 @@ export interface ContractEvent {
 export interface GetEventsResult {
   events: ContractEvent[]
   cursor: string | null // opaque cursor for pagination
-}
-
-export interface FactoryState {
-  admin: string       // Stellar account address (G...)
-  treasury: string    // Stellar account address (G...)
-  base_fee: bigint    // i128 — fee in stroops for token creation / minting
-  metadata_fee: bigint // i128 — fee in stroops for set_metadata
-  token_count: number // u32 — total tokens deployed via the factory
-  paused: boolean     // whether the contract is paused
 }

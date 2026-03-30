@@ -1,0 +1,57 @@
+name: Contract Fuzz Testing
+
+on:
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/fuzz-testing.yml"
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: "0 2 * * *"
+
+jobs:
+  fuzz:
+    name: Fuzz Test Contract
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      
+      - name: Install Rust (nightly for libfuzzer)
+        uses: dtolnay/rust-toolchain@nightly
+      
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
+      
+      - name: Run create_token fuzz target
+        working-directory: contracts/token-factory/fuzz
+        run: cargo +nightly run --release --bin fuzz_create_token -- -max_len=10000 -timeout=60 -max_total_time=60
+        continue-on-error: true
+      
+      - name: Run fee_arithmetic fuzz target
+        working-directory: contracts/token-factory/fuzz
+        run: cargo +nightly run --release --bin fuzz_fee_arithmetic -- -max_len=1000 -timeout=60 -max_total_time=60
+        continue-on-error: true
+      
+      - name: Run burn fuzz target
+        working-directory: contracts/token-factory/fuzz
+        run: cargo +nightly run --release --bin fuzz_burn -- -max_len=1000 -timeout=60 -max_total_time=60
+        continue-on-error: true
+      
+      - name: Upload fuzz artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz-artifacts
+          path: |
+            contracts/token-factory/fuzz/artifacts/
+            contracts/token-factory/fuzz/crash-*
+          retention-days: 7
+

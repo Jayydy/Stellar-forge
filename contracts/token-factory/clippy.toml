@@ -1,0 +1,3 @@
+# Clippy configuration for the token-factory Soroban contract.
+msrv = "1.75"
+cognitive-complexity-threshold = 15

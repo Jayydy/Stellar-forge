@@ -65,10 +65,7 @@ async function decodeFactoryState(scVal: unknown): Promise<FactoryState> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const map: Map<string, any> = new Map(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (val.map() as any[]).map((entry: any) => [
-      entry.key().sym().toString() as string,
-      entry.val(),
-    ]),
+    (val.map() as any[]).map((entry: any) => [entry.key().sym().toString() as string, entry.val()]),
   )
 
   function getAddress(key: string): string {
@@ -106,9 +103,9 @@ async function decodeFactoryState(scVal: unknown): Promise<FactoryState> {
   return {
     admin: getAddress('admin'),
     treasury: getAddress('treasury'),
-    base_fee: getI128('base_fee'),
-    metadata_fee: getI128('metadata_fee'),
-    token_count: getU32('token_count'),
+    baseFee: getI128('base_fee').toString(),
+    metadataFee: getI128('metadata_fee').toString(),
+    tokenCount: getU32('token_count'),
     paused: getBool('paused'),
   }
 }

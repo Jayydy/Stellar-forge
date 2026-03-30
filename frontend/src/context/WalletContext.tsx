@@ -1,10 +1,19 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { walletService } from '../services/wallet'
+import { useNetwork } from './NetworkContext'
+
+function useNetworkSafe() {
+  try {
+    return useNetwork()
+  } catch {
+    return { network: 'testnet' as const }
+  }
+}
 
 interface WalletState {
   address: string | null
   isConnected: boolean
-  balance?: string
+  balance: string | undefined
 }
 
 interface WalletContextValue {
@@ -14,11 +23,13 @@ interface WalletContextValue {
   isInstalled: boolean
   connect: () => Promise<void>
   disconnect: () => void
+  refreshBalance: () => Promise<void>
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null)
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  const { network } = useNetworkSafe()
   const [wallet, setWallet] = useState<WalletState>({
     address: null,
     isConnected: false,
@@ -26,19 +37,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   })
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Start with sync window.freighter check; async check updates it once resolved
-  const [isInstalled, setIsInstalled] = useState<boolean>(walletService.isInstalled())
+  const [isInstalled, setIsInstalled] = useState<boolean>(true)
 
-  const fetchBalance = async (address: string) => {
+  // Stable callback — only recreated when network changes
+  const fetchBalance = useCallback(async (address: string) => {
     try {
-      const balance = await walletService.getBalance(address)
-      setWallet((prev) => ({ ...prev, balance }))
-    } catch (err) {
-      console.error('Failed to fetch balance:', err)
+      const balance = await walletService.getBalance(address, network)
+      setWallet((prev: WalletState) => ({ ...prev, balance }))
+    } catch {
+      // Balance fetch failure is non-critical; wallet remains connected
     }
-  }
+  }, [network])
 
-  const connect = async () => {
+  // Stable callback — only recreated when fetchBalance changes (i.e. network switch)
+  const connect = useCallback(async () => {
     setIsConnecting(true)
     setError(null)
     try {
@@ -51,18 +63,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsConnecting(false)
     }
-  }
+  }, [fetchBalance])
 
-  const disconnect = () => {
+  // Stable callback — no dependencies, reference never changes after mount
+  const disconnect = useCallback(() => {
     walletService.disconnect()
     setWallet({ address: null, isConnected: false, balance: undefined })
     setError(null)
-  }
+  }, [])
 
   useEffect(() => {
-    const init = async () => {
-      // Async install check — more reliable than window.freighter sniff
-      const installed = await walletService.isInstalledAsync()
+    const initWallet = async () => {
+      const installed = await walletService.isInstalled()
       setIsInstalled(installed)
 
       if (!installed) return
@@ -73,30 +85,37 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           setWallet({ address, isConnected: true, balance: undefined })
           await fetchBalance(address)
         }
-      } catch (err) {
-        console.error('Failed to check existing connection:', err)
+      } catch {
+        // Existing connection check failed silently; user can connect manually
       }
     }
 
-    init()
-  }, [])
+    initWallet()
+  }, [fetchBalance])
 
-  return (
-    <WalletContext.Provider
-      value={{
-        wallet,
-        isConnecting,
-        error,
-        isInstalled,
-        connect,
-        disconnect,
-      }}
-    >
-      {children}
-    </WalletContext.Provider>
+  // Refresh balance when network changes
+  useEffect(() => {
+    if (wallet.isConnected && wallet.address) {
+      fetchBalance(wallet.address)
+    }
+  }, [network, fetchBalance, wallet.isConnected, wallet.address])
+
+  // Stable callback — only recreated when fetchBalance or wallet.address changes
+  const refreshBalance = useCallback(
+    () => (wallet.address ? fetchBalance(wallet.address) : Promise.resolve()),
+    [fetchBalance, wallet.address],
   )
+
+  // Memoized context value — consumers only re-render when something actually changes
+  const value = useMemo<WalletContextValue>(
+    () => ({ wallet, isConnecting, error, isInstalled, connect, disconnect, refreshBalance }),
+    [wallet, isConnecting, error, isInstalled, connect, disconnect, refreshBalance],
+  )
+
+  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWalletContext(): WalletContextValue {
   const ctx = useContext(WalletContext)
   if (!ctx) {

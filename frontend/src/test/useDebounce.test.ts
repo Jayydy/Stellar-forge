@@ -16,7 +16,9 @@ describe('useDebounce', () => {
       initialProps: { value: 'first' },
     })
     rerender({ value: 'second' })
-    act(() => { vi.advanceTimersByTime(200) })
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
     expect(result.current).toBe('first')
   })
 
@@ -25,7 +27,9 @@ describe('useDebounce', () => {
       initialProps: { value: 'first' },
     })
     rerender({ value: 'second' })
-    act(() => { vi.advanceTimersByTime(300) })
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
     expect(result.current).toBe('second')
   })
 
@@ -34,12 +38,18 @@ describe('useDebounce', () => {
       initialProps: { value: 'a' },
     })
     rerender({ value: 'b' })
-    act(() => { vi.advanceTimersByTime(200) })
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
     rerender({ value: 'c' })
-    act(() => { vi.advanceTimersByTime(200) })
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
     // only 200ms since last change — should still be 'a'
     expect(result.current).toBe('a')
-    act(() => { vi.advanceTimersByTime(100) })
+    act(() => {
+      vi.advanceTimersByTime(100)
+    })
     expect(result.current).toBe('c')
   })
 
@@ -50,7 +60,9 @@ describe('useDebounce', () => {
     rerender({ value: 'updated' })
     unmount()
     // advancing time after unmount should not throw or cause stale updates
-    act(() => { vi.advanceTimersByTime(300) })
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
     expect(result.current).toBe('initial')
   })
 })

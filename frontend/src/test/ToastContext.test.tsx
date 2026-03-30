@@ -11,12 +11,16 @@ describe('useToast', () => {
   afterEach(() => vi.useRealTimers())
 
   it('throws when used outside ToastProvider', () => {
-    expect(() => renderHook(() => useToast())).toThrow('useToast must be used within a ToastProvider')
+    expect(() => renderHook(() => useToast())).toThrow(
+      'useToast must be used within a ToastProvider',
+    )
   })
 
   it('adds a toast with default variant info', () => {
     const { result } = renderHook(() => useToast(), { wrapper })
-    act(() => { result.current.addToast('Hello') })
+    act(() => {
+      result.current.addToast('Hello')
+    })
     expect(result.current.toasts).toHaveLength(1)
     expect(result.current.toasts[0]).toMatchObject({ message: 'Hello', variant: 'info' })
   })
@@ -43,24 +47,36 @@ describe('useToast', () => {
 
   it('auto-dismisses after 5 seconds', () => {
     const { result } = renderHook(() => useToast(), { wrapper })
-    act(() => { result.current.addToast('bye') })
+    act(() => {
+      result.current.addToast('bye')
+    })
     expect(result.current.toasts).toHaveLength(1)
-    act(() => { vi.advanceTimersByTime(5000) })
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
     expect(result.current.toasts).toHaveLength(0)
   })
 
   it('does not dismiss before 5 seconds', () => {
     const { result } = renderHook(() => useToast(), { wrapper })
-    act(() => { result.current.addToast('still here') })
-    act(() => { vi.advanceTimersByTime(4999) })
+    act(() => {
+      result.current.addToast('still here')
+    })
+    act(() => {
+      vi.advanceTimersByTime(4999)
+    })
     expect(result.current.toasts).toHaveLength(1)
   })
 
   it('manually removes a toast', () => {
     const { result } = renderHook(() => useToast(), { wrapper })
-    act(() => { result.current.addToast('remove me') })
-    const id = result.current.toasts[0].id
-    act(() => { result.current.removeToast(id) })
+    act(() => {
+      result.current.addToast('remove me')
+    })
+    const id = result.current.toasts[0]!.id
+    act(() => {
+      result.current.removeToast(id)
+    })
     expect(result.current.toasts).toHaveLength(0)
   })
 
@@ -70,9 +86,11 @@ describe('useToast', () => {
       result.current.addToast('keep')
       result.current.addToast('remove')
     })
-    const removeId = result.current.toasts[1].id
-    act(() => { result.current.removeToast(removeId) })
+    const removeId = result.current.toasts[1]!.id
+    act(() => {
+      result.current.removeToast(removeId)
+    })
     expect(result.current.toasts).toHaveLength(1)
-    expect(result.current.toasts[0].message).toBe('keep')
+    expect(result.current.toasts[0]!.message).toBe('keep')
   })
 })

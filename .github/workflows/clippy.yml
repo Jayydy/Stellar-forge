@@ -1,0 +1,37 @@
+name: Clippy Lint
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "contracts/**"
+      - ".github/workflows/clippy.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/clippy.yml"
+
+jobs:
+  clippy:
+    name: Run Clippy Lints
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+      
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
+      
+      - name: Run Clippy
+        working-directory: contracts
+        run: cargo clippy -- -D warnings

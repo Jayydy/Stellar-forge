@@ -2,3 +2,4 @@
 members = [
     "token-factory",
 ]
+resolver = "2"

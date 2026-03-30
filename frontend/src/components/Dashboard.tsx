@@ -1,100 +1,124 @@
-import { Input } from './UI';
-import { useState, useEffect } from 'react'
-import { TransactionHistory } from './TransactionHistory'
+import { useState, useMemo, useCallback, memo } from 'react'
+import type { TokenInfo, SortOrder } from '../types'
+import { applyFilters } from '../utils/tokenFilters'
 import { useDebounce } from '../hooks/useDebounce'
-import { useStellarContext } from '../context/StellarContext'
-import { STELLAR_CONFIG } from '../config/stellar'
-import type { TokenInfo } from '../types'
+import { Input } from './UI/Input'
+import { Card } from './UI/Card'
 
-export const TokenDashboard: React.FC = () => {
-  const { stellarService } = useStellarContext()
-  const { wallet } = useWallet()
-  const [tokens, setTokens] = useState<TokenInfo[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+interface DashboardProps {
+  tokens?: TokenInfo[]
+}
 
-  const loadTokens = useCallback(async () => {
-    if (!wallet.address) {
-      setTokens([])
-      setIsLoading(false)
-      return
-    }
+/**
+ * Memoized with React.memo — re-renders only when the tokens prop changes.
+ * Internal filter/sort state changes are isolated here and don't propagate upward.
+ *
+ * filteredTokens is wrapped in useMemo so the applyFilters computation only
+ * re-runs when tokens, search, creator, or sort actually change.
+ *
+ * Event handlers are wrapped in useCallback so their references stay stable
+ * across renders, which is important if they are ever passed to memoized children.
+ */
+const Dashboard: React.FC<DashboardProps> = memo(({ tokens }) => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [creatorFilter, setCreatorFilter] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
-    setIsLoading(true)
-    setError(null)
-    try {
-      const tokenList = await stellarService.getTokensByCreator(wallet.address)
-      setTokens(tokenList)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch tokens'
-      setError(message)
-      setTokens([])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [wallet.address])
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const debouncedCreator = useDebounce(creatorFilter, 300)
 
-  useEffect(() => {
-    loadTokens()
-  }, [loadTokens])
-
-  const handleCopyAddress = async (address: string) => {
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopiedAddress(address)
-      setTimeout(() => setCopiedAddress(null), 1800)
-    } catch {
-      setError('Unable to copy token address. Check browser clipboard permissions and try again.')
-    }
-  }
-
-  const formatCreationDate = useMemo(
-    () => (createdAt: number | undefined) => {
-      if (!createdAt) return 'Unknown'
-      return new Date(createdAt * 1000).toLocaleString()
-    },
-    []
+  // Expensive filter + sort — only recomputes when inputs change
+  const filteredTokens = useMemo(
+    () => applyFilters(tokens, debouncedSearch, debouncedCreator, sortOrder),
+    [tokens, debouncedSearch, debouncedCreator, sortOrder],
   )
 
-  const results = useMemo(() => {
-    if (!search.trim()) return tokens
-    const query = search.toLowerCase()
-    return tokens.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.symbol.toLowerCase().includes(query) ||
-        t.creator.toLowerCase().includes(query)
-    )
-  }, [tokens, search])
+  const isFilterActive = debouncedSearch !== '' || debouncedCreator !== ''
 
-  const factoryContractId = STELLAR_CONFIG.factoryContractId
+  // Stable callback references so child inputs don't re-render unnecessarily
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }, [])
+
+  const handleCreatorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCreatorFilter(e.target.value)
+  }, [])
+
+  const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOrder(e.target.value as SortOrder)
+  }, [])
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <Input
-          label="Search tokens"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by address or name..."
-        />
-        <ul className="space-y-2">
-          {results.map((r, i) => (
-            <li key={i} className="p-2 border rounded text-sm">{JSON.stringify(r)}</li>
-          ))}
-        </ul>
+    <div className="space-y-4">
+      {/* FilterBar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 min-w-0">
+          <Input
+            label="Search by name or symbol"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <Input
+            label="Filter by creator address"
+            value={creatorFilter}
+            onChange={handleCreatorChange}
+          />
+        </div>
+        <div className="space-y-1 w-full sm:w-auto sm:min-w-[180px]">
+          <label htmlFor="sort-order" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sort order
+          </label>
+          <select
+            id="sort-order"
+            value={sortOrder}
+            onChange={handleSortChange}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="alphabetical">Alphabetical</option>
+          </select>
+        </div>
       </div>
 
-      {factoryContractId && (
-        <div className="space-y-2">
-          <h2 className="text-base font-semibold text-gray-800">Recent Activity</h2>
-          <TransactionHistory contractId={factoryContractId} />
-        </div>
+      {filteredTokens.length === 0 ? (
+        <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm sm:text-base">
+          {isFilterActive
+            ? 'No tokens match your search.'
+            : 'No tokens have been deployed yet.'}
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {filteredTokens.map((token, i) => (
+            <li key={i}>
+              <Card>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">{token.name}</span>
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">({token.symbol})</span>
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">Decimals: {token.decimals}</span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                  <div>
+                    <span className="font-medium">Total Supply:</span> {token.totalSupply}
+                  </div>
+                  <div className="break-all sm:truncate">
+                    <span className="font-medium">Creator:</span>{' '}
+                    <span className="font-mono text-xs">{token.creator}</span>
+                  </div>
+                </div>
+              </Card>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   )
-}
+})
 
-export const Dashboard = TokenDashboard
+Dashboard.displayName = 'Dashboard'
+
+export { Dashboard }

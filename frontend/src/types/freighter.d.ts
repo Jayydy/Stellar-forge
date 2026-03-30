@@ -79,26 +79,22 @@ declare module '@stellar/freighter-api' {
   export function getNetworkDetails(): Promise<GetNetworkDetailsResponse>
   export function signTransaction(
     xdr: string,
-    opts?: SignTransactionOptions
+    opts?: SignTransactionOptions,
   ): Promise<SignTransactionResponse>
   export function signAuthEntry(
     authEntryXdr: string,
-    opts: SignAuthEntryOptions
+    opts: SignAuthEntryOptions,
   ): Promise<SignAuthEntryResponse>
   export function signMessage(
     message: string,
-    opts: SignMessageOptions
+    opts: SignMessageOptions,
   ): Promise<SignMessageResponse>
   export function addToken(opts: AddTokenOptions): Promise<AddTokenResponse>
 
   export class WatchWalletChanges {
     constructor(timeout?: number)
     watch(
-      callback: (result: {
-        address: string
-        network: string
-        networkPassphrase: string
-      }) => void
+      callback: (result: { address: string; network: string; networkPassphrase: string }) => void,
     ): void
     stop(): void
   }
@@ -124,6 +120,6 @@ declare module '@stellar/freighter-api' {
 // Extend Window interface to include Freighter
 declare global {
   interface Window {
-    freighter?: any
+    freighter?: unknown
   }
 }

@@ -2,11 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      DEVELOPMENT FALLBACK ONLY — meta tags cannot enforce frame-ancestors.
+      Production CSP is set via HTTP headers in vercel.json / public/_headers,
+      generated from src/csp/policy.ts. Do not rely on this tag for production
+      security and do not edit it by hand — run `npm run prebuild` instead.
+
+      X-Frame-Options and frame-ancestors are header-only directives; browsers
+      silently ignore them when set via meta tags.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gateway.pinata.cloud; connect-src 'self' https://horizon.stellar.org https://horizon-testnet.stellar.org https://soroban-testnet.stellar.org https://rpc-mainnet.stellar.org https://gateway.pinata.cloud https://api.pinata.cloud https://*.ingest.sentry.io; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests; worker-src blob:" />
+    <!-- X-Content-Type-Options prevents MIME-type sniffing attacks. -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="StellarForge is a user-friendly dApp that lets you deploy custom tokens on the Stellar blockchain without writing code. Create, mint, and manage tokens with Freighter wallet integration." />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="StellarForge - Stellar Token Deployer" />
+    <meta property="og:description" content="Deploy custom tokens on the Stellar blockchain without writing code. Create, mint, and manage tokens with Freighter wallet integration." />
+    <meta property="og:image" content="/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://stellarforge.app" />
+    <meta property="og:site_name" content="StellarForge" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StellarForge - Stellar Token Deployer" />
+    <meta name="twitter:description" content="Deploy custom tokens on the Stellar blockchain without writing code. Create, mint, and manage tokens with Freighter wallet integration." />
+    <meta name="twitter:image" content="/og-image.svg" />
+
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="StellarForge" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <title>StellarForge - Stellar Token Deployer</title>
+    <!-- Plausible Analytics — loaded only when VITE_PLAUSIBLE_DOMAIN is set -->
+    <!-- defer + data-api keeps it privacy-respecting and non-blocking -->
+    <script
+      defer
+      data-domain="%VITE_PLAUSIBLE_DOMAIN%"
+      data-api="https://plausible.io/api/event"
+      src="https://plausible.io/js/script.manual.js"
+    ></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
   </head>
   <body>
     <div id="root"></div>

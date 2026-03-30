@@ -1,0 +1,14 @@
+services:
+  stellar:
+    image: stellar/quickstart:latest
+    ports:
+      - "8000:8000"
+    command: /start --local
+    environment:
+      - ENABLE_SOROBAN_RPC=true
+      - ENABLE_HORIZON=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

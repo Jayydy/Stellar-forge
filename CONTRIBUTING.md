@@ -16,6 +16,40 @@ Thank you for your interest in contributing to StellarForge! This document provi
 - [Security](#security)
 - [Getting Help](#getting-help)
 
+## Code Quality Hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged) to enforce code quality automatically. The hooks are installed when you run `npm install` at the repo root (via the `prepare` script).
+
+### What runs automatically
+
+| Git event | Hook | What it does |
+|-----------|------|--------------|
+| `git commit` | `pre-commit` | Runs `lint-staged` on staged files: ESLint auto-fix → Prettier format. Blocks the commit if lint errors remain after auto-fix. |
+| `git push` | `pre-push` | Runs the full frontend test suite (`npm test -- --run`). Aborts the push if any tests fail. |
+
+### Targeted file types
+
+`lint-staged` runs on staged files matching: `.js`, `.jsx`, `.ts`, `.tsx`, `.json`, `.css`, `.md`
+
+### Reinstalling hooks
+
+If hooks stop working (e.g. after a fresh clone):
+
+```bash
+npm install
+```
+
+The `prepare` script re-initialises Husky automatically.
+
+### Bypassing hooks (not recommended)
+
+```bash
+git commit --no-verify -m "your message"
+git push --no-verify
+```
+
+Only use this when absolutely necessary and document the reason in your commit message.
+
 ## Prerequisites
 
 Before setting up your development environment, ensure you have the following installed:
@@ -462,6 +496,19 @@ test('submits form with valid data', () => {
 
 ### Smart Contracts (Rust)
 
+#### Formatting
+
+All Rust code **must** be formatted with `cargo fmt` before committing. CI enforces this with `cargo fmt -- --check` and will fail if any file is not formatted.
+
+```bash
+# Format all Rust files
+cd contracts
+cargo fmt
+
+# Verify formatting (what CI runs)
+cargo fmt -- --check
+```
+
 #### General Principles
 
 - Follow Rust naming conventions (snake_case for functions/variables, PascalCase for types)
@@ -681,33 +728,55 @@ Include in your PR:
 
 ## SDK Upgrade Process
 
+### Current Pinned Versions
+
+The contracts currently pin the following SDK versions in `contracts/token-factory/Cargo.toml`:
+
+| Crate | Version | Reason |
+|-------|---------|--------|
+| `soroban-sdk` | `25.0.0` | Matches Stellar Protocol 22 (the current mainnet protocol). Pinned to avoid unexpected breaking changes from minor/patch releases. |
+| `soroban-token-sdk` | `25.0.0` | Must match `soroban-sdk` exactly — mismatched versions cause type incompatibilities at compile time. |
+
+> **Important:** `soroban-sdk` and `soroban-token-sdk` must always be on the **same version**. When upgrading one, upgrade both together.
+
+### Upgrading soroban-sdk
+
 When upgrading Soroban SDK or other major dependencies, follow this process:
 
-### Step 1: Plan the Upgrade
+#### Step 1: Plan the Upgrade
 
-- Check the changelog for breaking changes
+- Check the [soroban-sdk CHANGELOG](https://github.com/stellar/rs-soroban-sdk/blob/main/CHANGELOG.md) for breaking changes
+- Check the [soroban-token-sdk releases](https://github.com/stellar/rs-soroban-sdk/releases) — confirm the matching version
 - Review migration guides
 - Identify affected code
 
-### Step 2: Update Dependencies
+#### Step 2: Update Dependencies
 
-```bash
-# For Soroban SDK in contracts
-cd contracts/token-factory
-cargo update soroban-sdk --aggressive
+Edit `contracts/token-factory/Cargo.toml` to set the new version for **both** crates:
 
-# For frontend dependencies
-cd frontend
-npm update
+```toml
+[dependencies]
+soroban-sdk = "NEW_VERSION"
+soroban-token-sdk = { version = "NEW_VERSION" }
+
+[dev-dependencies]
+soroban-sdk = { version = "NEW_VERSION", features = ["testutils"] }
 ```
 
-### Step 3: Update Code
+Then regenerate the lockfile:
+
+```bash
+cd contracts
+cargo update
+```
+
+#### Step 3: Update Code
 
 - Fix any breaking changes in the contract code
 - Update TypeScript types if needed
 - Update configuration files
 
-### Step 4: Test Thoroughly
+#### Step 4: Test Thoroughly
 
 ```bash
 # Contract tests
@@ -723,39 +792,45 @@ npm run lint
 # Deploy to testnet and test all features
 ```
 
-### Step 5: Document Changes
+#### Step 5: Document Changes
 
 - Update CHANGELOG.md with upgrade details
 - Document any breaking changes
+- Update the version table in this section of CONTRIBUTING.md
 - Update README if needed
 
-### Step 6: Submit PR
+#### Step 6: Submit PR
 
 Include in your PR:
 - Dependency update commits
 - Code changes for compatibility
-- Updated documentation
+- Updated documentation (including the version table above)
 - Test results
 
 ### Example: Upgrading Soroban SDK
 
 ```bash
-# 1. Update Cargo.toml
-cd contracts/token-factory
-cargo update soroban-sdk
+# 1. Edit contracts/token-factory/Cargo.toml — bump both soroban-sdk and soroban-token-sdk
 
-# 2. Fix any compilation errors
+# 2. Regenerate lockfile
+cd contracts && cargo update
+
+# 3. Fix any compilation errors
 cargo build --target wasm32-unknown-unknown
 
-# 3. Run tests
-cargo test
+# 4. Run tests
+cd token-factory && cargo test
 
-# 4. Update CHANGELOG.md
-# Add entry: "Upgraded Soroban SDK to v21.1.0"
+# 5. Update CHANGELOG.md
+# Add entry: "Upgraded soroban-sdk and soroban-token-sdk to vX.Y.Z"
 
-# 5. Commit
-git commit -m "chore(contracts): upgrade soroban-sdk to v21.1.0"
+# 6. Commit
+git commit -m "chore(contracts): upgrade soroban-sdk and soroban-token-sdk to vX.Y.Z"
 ```
+
+## Code of Conduct
+
+Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## Security
 
@@ -827,13 +902,9 @@ cargo build --target wasm32-unknown-unknown
 - Check that you're on the correct network (testnet/mainnet)
 - Clear browser cache and reload
 
-## Code of Conduct
-
-We are committed to providing a welcoming and inclusive environment. Please be respectful and constructive in all interactions.
-
 ## License
 
-By contributing to StellarForge, you agree that your contributions will be licensed under the same license as the project (see LICENSE file).
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 
 ---
 

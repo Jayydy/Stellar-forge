@@ -1,0 +1,175 @@
+{
+  "app": {
+    "title": "StellarForge",
+    "subtitle": "Stellar Token Deployer",
+    "skipToMain": "Skip to main content",
+    "toggleDarkMode": "Toggle dark mode",
+    "factoryWarning": "Factory contract not configured. Please set VITE_FACTORY_CONTRACT_ID in your .env file."
+  },
+  "nav": {
+    "home": "Home",
+    "create": "Create",
+    "mint": "Mint",
+    "burn": "Burn",
+    "tokens": "Tokens",
+    "ariaLabel": "Primary",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "admin": "Admin"
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "connecting": "Connecting...",
+    "disconnect": "Disconnect",
+    "installFreighter": "Install Freighter",
+    "connected": "Wallet connected",
+    "disconnected": "Wallet disconnected",
+    "connectFailed": "Failed to connect wallet"
+  },
+  "home": {
+    "welcome": "Welcome to Nova Launch",
+    "description": "Deploy your custom tokens on Stellar blockchain",
+    "getStarted": "Get Started",
+    "navHint": "Use the nav above to go to Create, Mint, Burn, or Tokens.",
+    "welcomeToast": "Welcome! Let's deploy your token."
+  },
+  "createToken": {
+    "title": "Create Token",
+    "placeholder": "Placeholder for Create Token page",
+    "description": "Future implementation: token issuance form and on-chain deploy flow."
+  },
+  "tokenForm": {
+    "tokenName": "Token Name",
+    "tokenNamePlaceholder": "My Token",
+    "tokenSymbol": "Token Symbol",
+    "tokenSymbolPlaceholder": "MTK",
+    "decimals": "Decimals",
+    "initialSupply": "Initial Supply",
+    "initialSupplyPlaceholder": "1000000",
+    "descriptionLabel": "Description (Optional)",
+    "descriptionPlaceholder": "Describe your token...",
+    "deploy": "Deploy Token",
+    "deploying": "Deploying...",
+    "deploySuccess": "Token deployed successfully!",
+    "deployFailed": "Token deployment failed",
+    "deployError": "An error occurred during deployment",
+    "invalidName": "Invalid token name",
+    "invalidSymbol": "Invalid token symbol",
+    "invalidDecimals": "Decimals must be between 0 and 18",
+    "nameLabel": "Token Name",
+    "namePlaceholder": "My Token",
+    "symbolLabel": "Token Symbol",
+    "symbolPlaceholder": "MTK",
+    "decimalsLabel": "Decimals",
+    "initialSupplyLabel": "Initial Supply",
+    "estimatedFee": "Estimated Fee",
+    "feeDescription": "Fee for token creation on Stellar",
+    "network": "Network",
+    "connectWalletFirst": "Please connect your wallet to deploy a token",
+    "walletNotConnected": "Wallet is not connected",
+    "validationFailed": "Please fix the errors in the form",
+    "submitError": "Failed to submit form",
+    "deployedSuccessfully": "deployed successfully!"
+  },
+  "mintForm": {
+    "tokenAddress": "Token Address",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Amount",
+    "amountPlaceholder": "0",
+    "mint": "Mint",
+    "tokenFound": "Token found:"
+  },
+  "burnForm": {
+    "tokenAddress": "Token Address",
+    "tokenAddressPlaceholder": "G...",
+    "amount": "Amount",
+    "amountPlaceholder": "0",
+    "burn": "Burn",
+    "tokenFound": "Token found:"
+  },
+  "setMetadata": {
+    "tokenAddress": "Token Address",
+    "tokenAddressPlaceholder": "G...",
+    "metadataUri": "Metadata URI",
+    "metadataUriPlaceholder": "ipfs://Qm...",
+    "submit": "Set Metadata",
+    "submitting": "Submitting...",
+    "success": "Metadata updated successfully",
+    "invalidUri": "Metadata URI must be a valid IPFS URI (e.g. ipfs://Qm...)"
+  },
+  "dashboard": {
+    "searchLabel": "Search tokens",
+    "searchPlaceholder": "Search by address or name...",
+    "recentActivity": "Recent Activity",
+    "copyError": "Unable to copy token address. Check browser clipboard permissions and try again.",
+    "refresh": "Refresh",
+    "noTokens": "No tokens have been deployed yet.",
+    "noSearchMatch": "No tokens match your search.",
+    "creatorPrefix": "Creator:"
+  },
+  "tokenDetail": {
+    "title": "Token Detail",
+    "loading": "Loading token {{address}}...",
+    "loadError": "Unable to load token"
+  },
+  "transactionHistory": {
+    "noEvents": "No events found.",
+    "loadMore": "Load more",
+    "retry": "Retry",
+    "loadFailed": "Failed to load events",
+    "loadMoreFailed": "Failed to load more events",
+    "eventLabels": {
+      "token_created": "Token Created",
+      "tokens_minted": "Tokens Minted",
+      "tokens_burned": "Tokens Burned",
+      "metadata_set": "Metadata Set",
+      "fees_updated": "Fees Updated",
+      "create": "Created",
+      "mint": "Minted",
+      "burn": "Burned"
+    },
+    "dataLabels": {
+      "token": "Token",
+      "creator": "Creator",
+      "to": "To",
+      "from": "From",
+      "amount": "Amount",
+      "uri": "URI",
+      "baseFee": "Base fee",
+      "metadataFee": "Metadata fee",
+      "tx": "tx"
+    }
+  },
+  "networkSwitcher": {
+    "ariaLabel": "Active network: {{network}}. Click to switch.",
+    "selectNetwork": "Select network",
+    "testnet": "Testnet",
+    "mainnet": "Mainnet",
+    "switchToMainnet": "Switch to Mainnet?",
+    "switchWarning": "You are switching to mainnet. Real funds will be used. Make sure you know what you are doing.",
+    "confirm": "Switch to Mainnet",
+    "cancel": "Cancel"
+  },
+  "mainnetModal": {
+    "title": "Mainnet Deployment Review",
+    "warning": "⚠️ This action cannot be undone and will cost real XLM",
+    "tokenParams": "Token Parameters",
+    "name": "Name:",
+    "symbol": "Symbol:",
+    "decimals": "Decimals:",
+    "initialSupply": "Initial Supply:",
+    "description": "Description:",
+    "image": "Image:",
+    "confirmLabel": "Type \"{{symbol}}\" to confirm deployment",
+    "confirmHelp": "This confirmation ensures you have reviewed all parameters carefully.",
+    "cancel": "Cancel",
+    "deploy": "Deploy to Mainnet"
+  },
+  "errors": {
+    "title": "Error"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English"
+  }
+}

@@ -14,7 +14,7 @@ interface ToastContextValue {
   removeToast: (id: number) => void
 }
 
-const ToastContext = createContext<ToastContextValue | null>(null)
+export const ToastContext = createContext<ToastContextValue | null>(null)
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -24,11 +24,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const addToast = useCallback((message: string, variant: ToastVariant = 'info') => {
-    const id = nextId.current++
-    setToasts((prev) => [...prev, { id, message, variant }])
-    setTimeout(() => removeToast(id), 5000)
-  }, [removeToast])
+  const addToast = useCallback(
+    (message: string, variant: ToastVariant = 'info') => {
+      const id = nextId.current++
+      setToasts((prev) => [...prev, { id, message, variant }])
+      setTimeout(() => removeToast(id), 5000)
+    },
+    [removeToast],
+  )
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
@@ -37,6 +40,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = (): ToastContextValue => {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error('useToast must be used within a ToastProvider')

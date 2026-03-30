@@ -1,0 +1,31 @@
+[package]
+name = "token-factory-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+[[bin]]
+name = "fuzz_create_token"
+path = "fuzz_targets/fuzz_create_token.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_fee_arithmetic"
+path = "fuzz_targets/fuzz_fee_arithmetic.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_burn"
+path = "fuzz_targets/fuzz_burn.rs"
+test = false
+doc = false
+
+[profile.release]
+opt-level = 3
+

@@ -1,0 +1,25 @@
+{
+  "name": "StellarForge",
+  "short_name": "StellarForge",
+  "description": "Deploy and manage custom tokens on the Stellar blockchain without writing code.",
+  "theme_color": "#7c3aed",
+  "background_color": "#0f0f1a",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
