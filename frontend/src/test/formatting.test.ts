@@ -138,6 +138,10 @@ describe('stroopsToXLM', () => {
   it('handles string input', () => {
     expect(stroopsToXLM('5000000')).toBe(0.5)
   })
+
+  it('formats 70000000 stroops as readable XLM', () => {
+    expect(formatXLM(stroopsToXLM(70000000))).toBe('7.0000000 XLM')
+  })
 })
 
 describe('xlmToStroops', () => {

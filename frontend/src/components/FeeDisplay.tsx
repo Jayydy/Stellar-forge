@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { stellarService, type FactoryState } from '../services/stellar'
-import { stroopsToXLM } from '../utils/formatting'
+import { stroopsToXLM, formatXLM } from '../utils/formatting'
 
 interface FeeDisplayProps {
   feeType: 'base' | 'metadata'
@@ -70,7 +70,7 @@ export const FeeDisplay: React.FC<FeeDisplayProps> = ({
 
   return (
     <span className={`text-sm text-gray-700 ${className}`}>
-      {label}: {xlm} XLM
+      {label}: {formatXLM(xlm)}
     </span>
   )
 }
