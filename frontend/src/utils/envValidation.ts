@@ -21,6 +21,12 @@ const ENV_VARS: EnvVar[] = [
     required: true,
   },
   {
+    key: 'VITE_TOKEN_WASM_HASH',
+    value: import.meta.env.VITE_TOKEN_WASM_HASH,
+    description: 'WASM hash of the token contract',
+    required: true,
+  },
+  {
     key: 'VITE_IPFS_API_KEY',
     value: import.meta.env.VITE_IPFS_API_KEY,
     description: 'Pinata IPFS API key',
