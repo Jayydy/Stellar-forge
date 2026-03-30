@@ -56,8 +56,6 @@ function AppContent() {
     trackPageView(location.pathname)
   }, [location.pathname])
 
-  const handleGetStarted = () => addToast(t('home.welcomeToast'), 'info')
-
   const handleConnect = async () => {
     try {
       await connect()
@@ -176,7 +174,7 @@ function AppContent() {
                   path="/"
                   element={
                     <ErrorBoundary>
-                      <Home onGetStarted={handleGetStarted} />
+                      <Home />
                     </ErrorBoundary>
                   }
                 />

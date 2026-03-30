@@ -1,25 +1,46 @@
-import { Button } from './UI'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../context/ToastContext'
+import { useStellarContext } from '../context/StellarContext'
+import { useWalletContext } from '../context/WalletContext'
+import { TokenForm } from './TokenForm'
+import { STELLAR_CONFIG } from '../config/stellar'
 
-type HomeProps = {
-  onGetStarted: () => void
-}
-
-export const Home: React.FC<HomeProps> = ({ onGetStarted }) => {
+export const Home: React.FC = () => {
   const { t } = useTranslation()
+  const { addToast } = useToast()
+  const { stellarService } = useStellarContext()
+  const { refreshBalance } = useWalletContext()
+
+  const handleSubmit = async (params: {
+    name: string
+    symbol: string
+    decimals: number
+    initialSupply: string
+  }) => {
+    const result = await stellarService.deployToken({
+      ...params,
+      salt: Math.random().toString(36).slice(2, 15),
+      tokenWasmHash: STELLAR_CONFIG.tokenWasmHash || '',
+      feePayment: '100000',
+    })
+
+    if (result.success) {
+      addToast(t('tokenForm.deploySuccess'), 'success')
+      await refreshBalance()
+    } else {
+      addToast(t('tokenForm.deployFailed'), 'error')
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="border-4 border-dashed border-gray-200 rounded-lg p-6 sm:p-8 text-center">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4">
+    <div className="max-w-lg mx-auto space-y-4">
+      <div>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
           {t('home.welcome')}
         </h2>
-        <p className="text-gray-600 mb-6 sm:mb-8">{t('home.description')}</p>
-        <Button onClick={onGetStarted} className="w-full sm:w-auto">
-          {t('home.getStarted')}
-        </Button>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('home.description')}</p>
       </div>
-      <p className="text-sm text-gray-500">{t('home.navHint')}</p>
+      <TokenForm onSubmit={handleSubmit} />
     </div>
   )
 }

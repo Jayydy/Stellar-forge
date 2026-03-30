@@ -6,7 +6,8 @@ import { useToast } from '../context/ToastContext'
 import { useWalletContext } from '../context/WalletContext'
 import { useNetwork } from '../context/NetworkContext'
 import { validateTokenParams } from '../utils/validation'
-import { formatXLM } from '../utils/formatting'
+import { formatXLM, stroopsToXLM } from '../utils/formatting'
+import { useFactoryState } from '../hooks/useFactoryState'
 
 interface TokenFormProps {
   onSubmit: (params: {
@@ -16,6 +17,7 @@ interface TokenFormProps {
     initialSupply: string
   }) => Promise<void>
   isLoading?: boolean
+  /** Override the fee shown in the preview (stroops). Falls back to on-chain base_fee. */
   estimatedFee?: string
 }
 
@@ -29,12 +31,20 @@ interface FormErrors {
 export const TokenForm: React.FC<TokenFormProps> = ({
   onSubmit,
   isLoading = false,
-  estimatedFee = '0.01',
+  estimatedFee,
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { wallet } = useWalletContext()
   const { network } = useNetwork()
+  const { state: factoryState } = useFactoryState()
+
+  // Resolve fee: prop override → on-chain base_fee → fallback 0
+  const feeXLM = estimatedFee
+    ? stroopsToXLM(estimatedFee)
+    : factoryState?.baseFee
+      ? stroopsToXLM(factoryState.baseFee)
+      : 0
 
   const [formData, setFormData] = useState({
     name: '',
@@ -201,7 +211,7 @@ export const TokenForm: React.FC<TokenFormProps> = ({
             </p>
           </div>
           <p className="text-lg font-semibold text-blue-900 dark:text-blue-300">
-            {formatXLM(estimatedFee)} XLM
+            {formatXLM(feeXLM)}
           </p>
         </div>
       </div>
