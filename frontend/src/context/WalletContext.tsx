@@ -26,6 +26,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   })
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Start with sync window.freighter check; async check updates it once resolved
+  const [isInstalled, setIsInstalled] = useState<boolean>(walletService.isInstalled())
 
   const fetchBalance = async (address: string) => {
     try {
@@ -58,10 +60,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const checkConnection = async () => {
-      if (!walletService.isInstalled()) {
-        return
-      }
+    const init = async () => {
+      // Async install check — more reliable than window.freighter sniff
+      const installed = await walletService.isInstalledAsync()
+      setIsInstalled(installed)
+
+      if (!installed) return
 
       try {
         const address = await walletService.checkExistingConnection()
@@ -74,7 +78,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    checkConnection()
+    init()
   }, [])
 
   return (
@@ -83,7 +87,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         wallet,
         isConnecting,
         error,
-        isInstalled: walletService.isInstalled(),
+        isInstalled,
         connect,
         disconnect,
       }}
