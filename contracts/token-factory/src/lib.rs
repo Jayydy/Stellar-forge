@@ -29,7 +29,6 @@ pub enum DataKey {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BatchTokenParams {
     pub salt: BytesN<32>,
-    pub token_wasm_hash: BytesN<32>,
     pub name: String,
     pub symbol: String,
     pub decimals: u32,
@@ -205,7 +204,7 @@ impl TokenFactory {
         Self::save_state(&env, &state);
 
         let result = Self::create_token_inner(
-            &env, creator, salt, token_wasm_hash, name, symbol,
+            &env, creator, salt, name, symbol,
             decimals, initial_supply, fee_payment, &mut state,
         );
 
@@ -219,7 +218,6 @@ impl TokenFactory {
         env: &Env,
         creator: Address,
         salt: BytesN<32>,
-        token_wasm_hash: BytesN<32>,
         name: String,
         symbol: String,
         decimals: u32,
@@ -248,7 +246,7 @@ impl TokenFactory {
         let token_address = env
             .deployer()
             .with_address(creator.clone(), salt)
-            .deploy(token_wasm_hash);
+            .deploy(state.token_wasm_hash.clone());
 
         TokenInitClient::new(env, &token_address).initialize(
             &creator,
@@ -322,7 +320,7 @@ impl TokenFactory {
         let token_address = env
             .deployer()
             .with_address(creator.clone(), p.salt)
-            .deploy(p.token_wasm_hash);
+            .deploy(state.token_wasm_hash.clone());
 
         TokenInitClient::new(env, &token_address).initialize(
             creator,
@@ -444,10 +442,6 @@ impl TokenFactory {
             .storage()
             .instance()
             .get(&(&token_address, symbol_short!("owner")))
-            .ok_or(Error::TokenNotFound)?;
-
-        // Verify admin is the token creator using direct mapping
-        let creator: Address = env.storage().instance().get(&(&token_address, symbol_short!("owner")))
             .ok_or(Error::TokenNotFound)?;
 
         if creator != admin {
