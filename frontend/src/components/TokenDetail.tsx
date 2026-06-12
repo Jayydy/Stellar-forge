@@ -154,14 +154,14 @@ export const TokenDetail: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {token.name}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white min-w-0">
+          <span className="break-words">{token.name}</span>
           <span className="ml-2 text-base font-normal text-gray-500 dark:text-gray-400">
             ({token.symbol})
           </span>
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {address && (
             <ShareButton
               tokenAddress={address}

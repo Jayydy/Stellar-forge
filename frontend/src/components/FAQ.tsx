@@ -36,11 +36,11 @@ export const FAQ: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+      <div className="text-center mb-6 sm:mb-12">
+        <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
           {t('faq.title', 'Frequently Asked Questions')}
         </h2>
-        <p className="text-xl text-gray-600 mb-8">
+        <p className="text-base sm:text-xl text-gray-600 mb-4 sm:mb-8">
           {t('faq.subtitle', 'Find answers to common questions about token creation, fees, and Stellar network.')}
         </p>
         <div className="max-w-md mx-auto">

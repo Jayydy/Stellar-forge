@@ -23,7 +23,7 @@ export const LanguageSwitcher: React.FC = () => {
         value={lang}
         onChange={handleChange}
         aria-label={t('language.label')}
-        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
       >
         {LANGUAGES.map(({ code, label }) => (
           <option key={code} value={code}>
