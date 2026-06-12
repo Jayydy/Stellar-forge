@@ -23,6 +23,8 @@ import { TokenDetail } from './components/TokenDetail'
 import { TokenExplorer } from './components/TokenExplorer'
 import { AdminPanel } from './components/AdminPanel'
 import { MetadataForm } from './components/MetadataForm'
+import { Manage } from './components/Manage'
+import { NotFound } from './components/NotFound'
 import { useFactoryState } from './hooks/useFactoryState'
 import { isFactoryConfigured } from './config/env'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -237,7 +239,37 @@ function AppContent() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <TokenDashboard />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/token/:address"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <TokenDetail />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manage"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <Manage />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
         </div>
